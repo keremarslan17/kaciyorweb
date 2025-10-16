@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, getDocs, addDoc, doc, query, onSnapshot, where, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import {
-  Container, Typography, Paper, Box, Grid, TextField, Button, List, ListItem,
+  Container, Typography, Paper, Box, TextField, Button, List,
   ListItemText, IconButton, CircularProgress, Divider, Tabs, Tab, Select, MenuItem, FormControl, ListItemButton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,8 +13,12 @@ interface Category { id: string; name: string; }
 interface MenuItemData { name: string; description: string; price: number; }
 interface MenuItem extends MenuItemData { id: string; }
 interface Order {
-  id: string; userName: string; totalPrice: number; status: 'yeni' | 'hazırlanıyor' | 'yolda' | 'tamamlandı' | 'iptal';
-  createdAt: any; items: any[];
+  id: string;
+  userName: string;
+  totalPrice: number;
+  status: 'yeni' | 'hazırlanıyor' | 'yolda' | 'tamamlandı' | 'iptal';
+  createdAt: any;
+  items: any[];
 }
 
 const BusinessOwner: React.FC = () => {
@@ -107,34 +111,30 @@ const BusinessOwner: React.FC = () => {
           <Tab label="Menü Yönetimi" />
         </Tabs>
       </Box>
-      {activeTab === 0 && <Paper sx={{p: 2}}>{loadingOrders ? <CircularProgress/> : <List>{orders.map(o => ( <ListItem key={o.id} divider><ListItemText primary={`${o.userName} - ${o.totalPrice.toFixed(2)} ₺`} secondary={new Date(o.createdAt?.toDate()).toLocaleString()} /><FormControl size="small" sx={{width: 150}}><Select value={o.status} onChange={(e) => handleOrderStatusChange(o.id, e.target.value as Order['status'])}><MenuItem value="yeni">Yeni</MenuItem><MenuItem value="hazırlanıyor">Hazırlanıyor</MenuItem><MenuItem value="yolda">Yolda</MenuItem><MenuItem value="tamamlandı">Tamamlandı</MenuItem><MenuItem value="iptal">İptal</MenuItem></Select></FormControl></ListItem>))}</List>}</Paper>}
+      {activeTab === 0 && <Paper sx={{p: 2}}>{loadingOrders ? <CircularProgress/> : <List>{orders.map(o => ( <ListItemButton key={o.id} divider><ListItemText primary={`${o.userName} - ${o.totalPrice.toFixed(2)} ₺`} secondary={new Date(o.createdAt?.toDate()).toLocaleString()} /><FormControl size="small" sx={{width: 150}}><Select value={o.status} onChange={(e) => handleOrderStatusChange(o.id, e.target.value as Order['status'])}><MenuItem value="yeni">Yeni</MenuItem><MenuItem value="hazırlanıyor">Hazırlanıyor</MenuItem><MenuItem value="yolda">Yolda</MenuItem><MenuItem value="tamamlandı">Tamamlandı</MenuItem><MenuItem value="iptal">İptal</MenuItem></Select></FormControl></ListItemButton>))}</List>}</Paper>}
       {activeTab === 1 && (
-         <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6">Kategoriler</Typography>
-                <Box component="form" onSubmit={handleAddCategory} sx={{ mt: 2, mb: 2 }}><TextField label="Yeni Kategori" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} fullWidth size="small"/><Button type="submit" variant="contained" fullWidth sx={{ mt: 1 }}>Ekle</Button></Box>
-                <Divider />
-                {loadingCategories ? <CircularProgress /> : <List component="nav">{categories.map(cat => ( 
-                  <ListItemButton key={cat.id} selected={selectedCategory?.id === cat.id} onClick={() => handleSelectCategory(cat)}>
-                    <ListItemText primary={cat.name} />
-                  </ListItemButton>
-                ))}</List>}
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={8}>
-              <Paper sx={{ p: 2 }}>
-                <Typography variant="h6">{selectedCategory ? `${selectedCategory.name} - Ürünler` : "Kategori seçin"}</Typography>
-                {selectedCategory && (
-                  <>
-                    <Box component="form" onSubmit={handleAddMenuItem} sx={{ mt: 2, mb: 2 }}><TextField label="Ürün Adı" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} fullWidth size="small"/><TextField label="Açıklama" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} fullWidth size="small"/><TextField label="Fiyat (₺)" type="number" value={newItem.price} onChange={e => setNewItem({...newItem, price: e.target.value})} fullWidth size="small"/><Button type="submit" variant="contained" fullWidth sx={{ mt: 1 }}>Ekle</Button></Box>
-                    <Divider />
-                    {loadingMenuItems ? <CircularProgress /> : <List>{menuItems.map(item => (<ListItem key={item.id} secondaryAction={<IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton>}><ListItemText primary={item.name} secondary={`${item.description} - ${item.price} ₺`} /></ListItem>))}</List>}
-                  </>
-                )}
-              </Paper>
-            </Grid>
-         </Grid>
+         <Box sx={{ display: 'grid', gridTemplateColumns: { md: '1fr 2fr' }, gap: 4 }}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6">Kategoriler</Typography>
+              <Box component="form" onSubmit={handleAddCategory} sx={{ mt: 2, mb: 2 }}><TextField label="Yeni Kategori" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} fullWidth size="small"/><Button type="submit" variant="contained" fullWidth sx={{ mt: 1 }}>Ekle</Button></Box>
+              <Divider />
+              {loadingCategories ? <CircularProgress /> : <List component="nav">{categories.map(cat => ( 
+                <ListItemButton key={cat.id} selected={selectedCategory?.id === cat.id} onClick={() => handleSelectCategory(cat)}>
+                  <ListItemText primary={cat.name} />
+                </ListItemButton>
+              ))}</List>}
+            </Paper>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6">{selectedCategory ? `${selectedCategory.name} - Ürünler` : "Kategori seçin"}</Typography>
+              {selectedCategory && (
+                <>
+                  <Box component="form" onSubmit={handleAddMenuItem} sx={{ mt: 2, mb: 2 }}><TextField label="Ürün Adı" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} fullWidth size="small"/><TextField label="Açıklama" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} fullWidth size="small"/><TextField label="Fiyat (₺)" type="number" value={newItem.price} onChange={e => setNewItem({...newItem, price: e.target.value})} fullWidth size="small"/><Button type="submit" variant="contained" fullWidth sx={{ mt: 1 }}>Ekle</Button></Box>
+                  <Divider />
+                  {loadingMenuItems ? <CircularProgress /> : <List>{menuItems.map(item => (<ListItemButton key={item.id}><ListItemText primary={item.name} secondary={`${item.description} - ${item.price} ₺`} /><IconButton edge="end" onClick={() => handleDeleteMenuItem(item.id)}><DeleteIcon /></IconButton></ListItemButton>))}</List>}
+                </>
+              )}
+            </Paper>
+         </Box>
       )}
     </Container>
   );

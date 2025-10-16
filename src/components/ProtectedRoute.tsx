@@ -1,25 +1,26 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom'; // Yazım hatası düzeltildi
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
-  allowedRoles?: string[];
+  requiredRole?: string; // Make it optional
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
   const { currentUser, loading } = useAuth();
 
   if (loading) {
-    return null; 
+    return <div>Loading...</div>; // Or a spinner
   }
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(currentUser.role || '')) {
-    return <Navigate to="/" replace />; 
+  // If a requiredRole is specified, check if the user has that role
+  if (requiredRole && currentUser.role !== requiredRole) {
+    return <Navigate to="/" replace />; // Redirect if role doesn't match
   }
 
   return children;

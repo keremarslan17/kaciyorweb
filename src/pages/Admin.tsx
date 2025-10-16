@@ -30,8 +30,8 @@ const Admin: React.FC = () => {
     setLoading(true);
     const restQuery = await getDocs(collection(db, "restaurants"));
     const userQuery = await getDocs(collection(db, "users"));
-    setRestaurants(restQuery.docs.map(doc => ({ id: doc.id, ...doc.data() } as Restaurant)));
-    setUsers(userQuery.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)));
+    setRestaurants(restQuery.docs.map(d => ({ id: d.id, ...d.data() } as Restaurant)));
+    setUsers(userQuery.docs.map(d => ({ uid: d.id, ...d.data() } as User)));
     setLoading(false);
   }, []);
 
@@ -76,7 +76,6 @@ const Admin: React.FC = () => {
           <Tab label="Kullanıcı Yönetimi" />
         </Tabs>
       </Box>
-
       {activeTab === 0 && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>Yeni Restoran Ekle</Typography>
@@ -98,7 +97,6 @@ const Admin: React.FC = () => {
           </TableContainer>}
         </Paper>
       )}
-
       {activeTab === 1 && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>Kullanıcılar</Typography>

@@ -44,11 +44,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const cartRef = collection(db, 'users', currentUser.uid, 'cart');
-    const unsubscribe = onSnapshot(cartRef, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CartItem));
-      setCartItems(items);
-      setLoadingCart(false);
-    });
+    const unsubscribe = onSnapshot(cartRef, 
+      (snapshot) => {
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CartItem));
+        setCartItems(items);
+        setLoadingCart(false);
+      },
+      (error) => {
+        console.error("Error fetching cart:", error);
+        // If there is an error (e.g. permission denied), stop loading and clear items.
+        // This prevents the app from crashing.
+        setCartItems([]);
+        setLoadingCart(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [currentUser]);
@@ -61,12 +70,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      // Item exists, update quantity
       const existingDoc = querySnapshot.docs[0];
       const newQuantity = existingDoc.data().quantity + (item.quantity || 1);
       await updateDoc(doc(db, 'users', currentUser.uid, 'cart', existingDoc.id), { quantity: newQuantity });
     } else {
-      // Item does not exist, add new
       await addDoc(cartRef, { ...item, quantity: item.quantity || 1 });
     }
   }, [currentUser]);
@@ -78,9 +85,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = useCallback(async () => {
     if (!currentUser) throw new Error("Giriş yapmalısınız.");
-    cartItems.forEach(item => {
-        deleteDoc(doc(db, 'users', currentUser.uid, 'cart', item.id));
-    });
+    const deletePromises = cartItems.map(item => 
+      deleteDoc(doc(db, 'users', currentUser.uid, 'cart', item.id))
+    );
+    await Promise.all(deletePromises);
   }, [currentUser, cartItems]);
 
   const value = { cartItems, addToCart, removeFromCart, clearCart, loadingCart };
