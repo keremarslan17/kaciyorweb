@@ -1,16 +1,13 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-    Container, Typography, Box, Paper, Tabs, Tab
-} from '@mui/material';
-import MenuManagement from '../components/MenuManagement'; // Oluşturulacak
-import DiscountManager from '../components/DiscountManager'; // Oluşturulacak
-import SalesDashboard from '../components/SalesDashboard'; // Oluşturulacak
-import RestaurantEditor from '../components/RestaurantEditor'; // Oluşturulacak
-import WaiterManagement from '../components/WaiterManagement'; // Mevcut kod taşınacak
+import { Container, Typography, Box, Paper, Tabs, Tab } from '@mui/material';
+import MenuManagement from '../components/MenuManagement';
+import DiscountManager from '../components/DiscountManager';
+import SalesDashboard from '../components/SalesDashboard';
+import RestaurantEditor from '../components/RestaurantEditor';
+import WaiterManagement from '../components/WaiterManagement';
 
-// TabPanel Yardımcı Bileşeni
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -27,38 +24,37 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`business-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
 
-// Ana Pano Bileşeni
 const BusinessOwnerDashboard: React.FC = () => {
     const { userProfile } = useAuth();
     const [value, setValue] = useState(0);
 
-    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 
-    if (!userProfile) {
-        return <Typography>Yükleniyor...</Typography>;
-    }
-
     return (
         <Container maxWidth="lg" sx={{ mt: 4 }}>
-            <Paper sx={{ p: 4 }}>
-                <Typography variant="h4" gutterBottom>İşletmeci Paneli</Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-                    Restoran: {userProfile.restaurantName || userProfile.name}
+            <Paper sx={{ width: '100%', p: 2 }}>
+                <Typography variant="h4" gutterBottom sx={{ p: 2 }}>
+                    İşletmeci Paneli
+                </Typography>
+                <Typography variant="h6" color="text.secondary" sx={{ mb: 2, p: 2 }}>
+                    Restoran: {userProfile?.restaurantName || userProfile?.name || 'Yükleniyor...'}
                 </Typography>
 
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={value} onChange={handleChange} aria-label="business dashboard tabs">
+                    <Tabs 
+                        value={value} 
+                        onChange={handleChange} 
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        allowScrollButtonsMobile
+                    >
                         <Tab label="Menü Yönetimi" />
                         <Tab label="İndirimler" />
                         <Tab label="Satış Raporları" />
@@ -81,7 +77,6 @@ const BusinessOwnerDashboard: React.FC = () => {
                 <TabPanel value={value} index={4}>
                     <WaiterManagement />
                 </TabPanel>
-
             </Paper>
         </Container>
     );

@@ -1,15 +1,17 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
 
 interface ProtectedRouteProps {
   children: JSX.Element;
+  allowedRoles?: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+  const { user, userProfile, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -20,7 +22,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!userProfile) {
+    console.error("Auth Error: User exists in Auth, but not in Firestore.");
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // RE-IMPLEMENTED: Phone verification bypass for privileged roles
+  const isPrivilegedRole = ['admin', 'businessOwner', 'waiter'].includes(userProfile.role);
+  if (!userProfile.phoneVerified && !isPrivilegedRole) {
+      return <Navigate to="/phone-verification" state={{ from: location }} replace />;
+  }
+    
+  // RE-IMPLEMENTED: Role-based access control
+  if (allowedRoles && !allowedRoles.includes(userProfile.role)) {
+      return <Navigate to="/" replace />;
   }
 
   return children;

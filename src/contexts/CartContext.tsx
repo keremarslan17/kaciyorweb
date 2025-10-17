@@ -18,6 +18,7 @@ interface CartState {
 }
 
 interface CartContextType {
+  cart: CartItem[]; // EXPOSE THE CART ITEMS DIRECTLY
   cartState: CartState;
   addToCart: (item: Omit<CartItem, 'quantity'>, restaurantInfo: { id: string; name: string }) => void;
   removeFromCart: (id: string) => void;
@@ -61,8 +62,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateCartInFirestore = async (newCartState: CartState) => {
     if (user) {
-      const cartRef = doc(db, 'carts', user.uid);
-      await setDoc(cartRef, newCartState);
+      await setDoc(doc(db, 'carts', user.uid), newCartState);
     } else {
       localStorage.setItem('localCart', JSON.stringify(newCartState));
     }
@@ -76,16 +76,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addToCart = (item: Omit<CartItem, 'quantity'>, restaurantInfo: { id: string; name: string }) => {
     if (cartState.restaurantId && cartState.restaurantId !== restaurantInfo.id) {
-      const isConfirmed = window.confirm(
-        `Farklı bir restorandan ürün ekleyemezsiniz. Mevcut sepetinizdeki ürünler (${cartState.restaurantName}) silinsin ve yeni siparişiniz başlasın mı?`
-      );
-      if (isConfirmed) {
-        const newItems = [{ ...item, quantity: 1 }];
-        const newState = { restaurantId: restaurantInfo.id, restaurantName: restaurantInfo.name, items: newItems };
+      if (window.confirm(`Farklı bir restorandan ürün ekleyemezsiniz. Mevcut sepet (${cartState.restaurantName}) silinsin mi?`)) {
+        const newState = { restaurantId: restaurantInfo.id, restaurantName: restaurantInfo.name, items: [{ ...item, quantity: 1 }] };
         setCartState(newState);
         updateCartInFirestore(newState);
       }
-      return; // Stop if user cancels
+      return;
     }
 
     const newItems = [...cartState.items];
@@ -96,22 +92,17 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       newItems.push({ ...item, quantity: 1 });
     }
     
-    const newState = { 
-      restaurantId: restaurantInfo.id, 
-      restaurantName: restaurantInfo.name, 
-      items: newItems 
-    };
+    const newState = { restaurantId: restaurantInfo.id, restaurantName: restaurantInfo.name, items: newItems };
     setCartState(newState);
     updateCartInFirestore(newState);
   };
 
   const removeFromCart = (id: string) => {
     const newItems = cartState.items.filter(item => item.id !== id);
-    const newState = { ...cartState, items: newItems };
-    
-    if(newItems.length === 0) {
+    if (newItems.length === 0) {
       clearCart();
     } else {
+      const newState = { ...cartState, items: newItems };
       setCartState(newState);
       updateCartInFirestore(newState);
     }
@@ -129,12 +120,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const checkout = async () => {
-    if (!user || cartState.items.length === 0) {
-      throw new Error("User not logged in or cart is empty");
-    }
-
+    if (!user || cartState.items.length === 0) throw new Error("User not logged in or cart is empty");
     const total = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    
     const orderData = {
       userId: user.uid,
       restaurantId: cartState.restaurantId,
@@ -144,18 +131,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       createdAt: serverTimestamp(),
       status: 'pending', 
     };
-
-    try {
-      await addDoc(collection(db, 'orders'), orderData);
-      clearCart();
-    } catch (error) {
-      console.error("Error creating order: ", error);
-      throw error;
-    }
+    await addDoc(collection(db, 'orders'), orderData);
+    clearCart();
   };
 
   return (
-    <CartContext.Provider value={{ cartState, addToCart, removeFromCart, updateQuantity, clearCart, checkout }}>
+    <CartContext.Provider value={{ cart: cartState.items, cartState, addToCart, removeFromCart, updateQuantity, clearCart, checkout }}>
       {children}
     </CartContext.Provider>
   );

@@ -3,21 +3,18 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { getAuth, onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { app, db } from '../firebase';
-import { CircularProgress, Box } from '@mui/material';
 
 interface UserProfile {
-  role: 'user' | 'waiter' | 'businessOwner' | 'admin';
+  role: 'customer' | 'waiter' | 'businessOwner' | 'admin';
   name: string;
-  restaurantId?: string;
-  restaurantName?: string;
+  phoneVerified?: boolean;
+  [key: string]: any; 
 }
 
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-  auth: any;
+  loading: boolean; 
   logout: () => Promise<void>;
 }
 
@@ -34,7 +31,8 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const auth = getAuth(app);
 
   useEffect(() => {
@@ -42,15 +40,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(currentUser);
       if (!currentUser) {
         setUserProfile(null);
-        setLoading(false);
+        setProfileLoading(false);
       }
+      setAuthLoading(false);
     });
     return () => unsubscribeAuth();
   }, [auth]);
 
   useEffect(() => {
     if (user) {
-      setLoading(true);
+      setProfileLoading(true);
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -58,32 +57,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           setUserProfile(null); 
         }
-        setLoading(false);
+        setProfileLoading(false); 
       });
       return () => unsubscribeProfile();
+    } else {
+      setProfileLoading(false);
     }
   }, [user]);
 
   const logout = async () => {
     await signOut(auth);
+    setUser(null);
+    setUserProfile(null);
   };
 
   const value: AuthContextType = {
     user,
     userProfile,
-    loading,
-    setLoading,
-    auth,
+    loading: authLoading || profileLoading,
     logout,
   };
-
-  if (loading && userProfile === null) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <AuthContext.Provider value={value}>

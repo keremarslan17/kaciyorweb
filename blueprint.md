@@ -1,7 +1,7 @@
 # Proje: Kaçıyor React Uygulaması
 
 ## Genel Hedef
-Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmesini, uygulama sayesinde hangi işletmede ne kadar indirimi olduğunu, ve işletmelere gitmeden indirimli menülerini görmesini sağlayan bir  sağlayan bir mobil uygulama. kaciyor.com adında bir websitesi de var bu web app de aynı işlevleri kullanıyor ve bu ikisi tamamen aynı server ve backendi kullanmalı, birinde yapılan değişiklik diğerinde de anında gözükmeli. Bu uygulama hep IOS hem Android de yayınlanacak. Web versyonu da react kullanılarak kodlanacak.
+Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmesini, uygulama sayesinde hangi işletmede ne kadar indirimi olduğunu, ve işletmelere gitmeden indirimli menülerini görmesini sağlayan bir mobil uygulama. kaciyor.com adında bir websitesi de var bu web app de aynı işlevleri kullanıyor ve bu ikisi tamamen aynı server ve backendi kullanmalı, birinde yapılan değişiklik diğerinde de anında gözükmeli. Bu uygulama hep IOS hem Android de yayınlanacak. Web versyonu da react kullanılarak kodlanacak.
 
 ## Özellikler (Features)
 
@@ -35,9 +35,9 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [x] İşletmeciye özel kontrol paneli arayüzü.
 - [x] Güvenli bir şekilde yeni garson ekleme (Cloud Function ile).
 - [x] Mevcut garsonları listeleme.
-- [ ] **İndirim Yönetimi:** Seçili ürünlere veya tüm ürünlere yüzde veya tutar olarak indirim uygulama.
-- [ ] **Satış Raporları:** Günlük, haftalık ve aylık satışları, adetleri ve ciroları detaylı olarak görme.
-- [ ] **Restoran Bilgileri:** Restoran ile ilgili tüm bilgileri düzenleyebilme.
+- [x] **İndirim Yönetimi:** Seçili ürünlere veya tüm ürünlere yüzde veya tutar olarak indirim uygulama.
+- [x] **Satış Raporları:** Günlük, haftalık ve aylık satışları, adetleri ve ciroları detaylı olarak görme.
+- [x] **Restoran Bilgileri:** Restoran ile ilgili tüm bilgileri düzenleyebilme.
 - [ ] Menü ve indirim yönetimi.
 - [ ] Garson silme.
 
@@ -53,7 +53,18 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [ ] İşletmeler için reklam modeli.
 
 ### 7. Admin Paneli
-- [ ] Restoran ve kullanıcı yönetimi.
+- [x] **Admin Paneli Arayüzü:** Sekmeli yapı (Restoran Yönetimi, Kullanıcı Yönetimi).
+- [x] **Restoran Yönetimi:**
+    - [x] Tüm restoranları listeleme.
+    - [x] Yeni restoran ekleme (form ile).
+        - [x] Harita için enlem/boylam bilgisi.
+        - [x] Restoran sahibi (işletmeci) kullanıcısı oluşturma.
+    - [ ] Restoran bilgilerini düzenleme/silme.
+- [ ] **Kullanıcı Yönetimi:**
+    - [ ] Tüm kullanıcıları listeleme.
+    - [ ] Kullanıcı rollerini düzenleme.
+    - [ ] Kullanıcıları etkinleştirme/devre dışı bırakma.
+- [x] **Güvenlik:** Sadece 'admin' rolüne sahip kullanıcılar erişebilir.
 
 ---
 
@@ -70,5 +81,6 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 *   **[Yapıldı]** Flaş indirimler mesafeye göre sıralanıyor.
 *   **[Yapıldı]** Garson paneli ve rol bazlı arayüz (UI) altyapısı oluşturuldu.
 *   **[Yapıldı]** İşletmeci paneli altyapısı ve güvenli garson ekleme özelliği eklendi.
+*   **[Yapıldı]** İşletmeci paneline istatistik ve indirim yönetimi eklendi.
 
 ---
