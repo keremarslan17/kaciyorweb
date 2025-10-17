@@ -1,26 +1,26 @@
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Box, CircularProgress } from '@mui/material';
 
 interface ProtectedRouteProps {
-  children: React.ReactElement;
-  requiredRole?: string; // Make it optional
+  children: JSX.Element;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
-  const { currentUser, loading } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>; // Or a spinner
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // If a requiredRole is specified, check if the user has that role
-  if (requiredRole && currentUser.role !== requiredRole) {
-    return <Navigate to="/" replace />; // Redirect if role doesn't match
+  if (!user) {
+    return <Navigate to="/login" />;
   }
 
   return children;

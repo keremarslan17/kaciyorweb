@@ -1,140 +1,169 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-
-// MUI
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import {
   Container,
-  Box,
-  Typography,
   TextField,
   Button,
-  Alert,
+  Typography,
+  Paper,
+  Box,
   CircularProgress,
-  Paper
+  Alert,
+  Avatar
 } from '@mui/material';
+import { AccountCircle } from '@mui/icons-material';
 
-const Profile: React.FC = () => {
-  const { currentUser } = useAuth();
-  
-  // Form state'lerini currentUser'dan gelen verilerle başlatıyoruz
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [school, setSchool] = useState('');
-  const [address, setAddress] = useState('');
-  
-  const [loading, setLoading] = useState(false);
+interface UserProfile {
+  name: string;
+  email: string;
+  address?: string;
+  phone?: string;
+}
+
+const ProfilePage: React.FC = () => {
+  const { user, loading: authLoading } = useAuth(); // Changed currentUser to user
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // currentUser verisi geldiğinde veya değiştiğinde state'leri doldur
   useEffect(() => {
-    if (currentUser) {
-      setName(currentUser.name || '');
-      setPhone(currentUser.phone || '');
-      setSchool(currentUser.school || '');
-      setAddress(currentUser.address || '');
-    }
-  }, [currentUser]);
-
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    
-    if (!currentUser) {
-      setError("Güncelleme yapmak için giriş yapmalısınız.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, {
-        name,
-        phone,
-        school,
-        address,
-      });
-      setSuccess("Profil bilgileriniz başarıyla güncellendi.");
-    } catch (err) {
-      setError("Profil güncellenirken bir hata oluştu.");
-      console.error("Profil güncelleme hatası:", err);
-    } finally {
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const docRef = doc(db, 'users', user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setProfile(docSnap.data() as UserProfile);
+          } else {
+            // If no profile exists, create one with default info
+            const defaultProfile: UserProfile = {
+              name: user.displayName || '',
+              email: user.email || '',
+            };
+            await setDoc(docRef, defaultProfile);
+            setProfile(defaultProfile);
+          }
+          setError(null);
+        } catch (err) {
+          console.error("Error fetching user profile:", err);
+          setError("Profil bilgileri alınamadı.");
+        }
+      }
       setLoading(false);
+    };
+
+    if (!authLoading) {
+      fetchProfile();
+    }
+  }, [user, authLoading]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (profile) {
+      setProfile({ ...profile, [e.target.name]: e.target.value });
     }
   };
 
-  if (!currentUser) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (user && profile) {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+      try {
+        const docRef = doc(db, 'users', user.uid);
+        await updateDoc(docRef, { ...profile });
+        setSuccess("Profil başarıyla güncellendi!");
+      } catch (err) {
+        console.error("Error updating profile:", err);
+        setError("Profil güncellenirken bir hata oluştu.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!user || !profile) {
     return (
       <Container maxWidth="sm">
-        <Typography>Kullanıcı bilgileri yükleniyor...</Typography>
+        <Typography variant="h6" align="center" sx={{ mt: 5 }}>
+          Lütfen profilinizi görüntülemek için giriş yapın.
+        </Typography>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="sm">
-      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-        <Typography component="h1" variant="h4" gutterBottom>
-          Profil Bilgileri
-        </Typography>
-        <Typography variant="body1" color="textSecondary" gutterBottom>
-          E-posta: {currentUser.email} (değiştirilemez)
-        </Typography>
-         <Typography variant="body1" color="textSecondary" gutterBottom>
-          Rol: {currentUser.role} (değiştirilemez)
-        </Typography>
-
-        <Box component="form" onSubmit={handleUpdateProfile} sx={{ mt: 3 }}>
-          <TextField
-            label="İsim Soyisim"
-            margin="normal"
-            fullWidth
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            label="Telefon Numarası"
-            margin="normal"
-            fullWidth
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          <TextField
-            label="Okul"
-            margin="normal"
-            fullWidth
-            value={school}
-            onChange={(e) => setSchool(e.target.value)}
-          />
-          <TextField
-            label="Adres"
-            margin="normal"
-            fullWidth
-            multiline
-            rows={3}
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-
-          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-          {success && <Alert severity="success" sx={{ mt: 2 }}>{success}</Alert>}
-
-          <Box sx={{ position: 'relative', mt: 3 }}>
+    <Container component="main" maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper elevation={4} sx={{ p: 4, borderRadius: '16px' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Avatar sx={{ m: 1, bgcolor: 'secondary.main', width: 64, height: 64 }}>
+            <AccountCircle sx={{ fontSize: 40 }}/>
+          </Avatar>
+          <Typography component="h1" variant="h5">
+            Profilim
+          </Typography>
+          {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
+          {success && <Alert severity="success" sx={{ width: '100%', mt: 2 }}>{success}</Alert>}
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
+            <TextField
+              margin="normal"
+              fullWidth
+              id="name"
+              label="Ad Soyad"
+              name="name"
+              value={profile.name}
+              onChange={handleChange}
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              id="email"
+              label="E-posta Adresi"
+              name="email"
+              value={profile.email}
+              disabled // Email is usually not changeable
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              id="phone"
+              label="Telefon Numarası"
+              name="phone"
+              value={profile.phone || ''}
+              onChange={handleChange}
+            />
+             <TextField
+              margin="normal"
+              fullWidth
+              id="address"
+              label="Adres"
+              name="address"
+              value={profile.address || ''}
+              onChange={handleChange}
+              multiline
+              rows={3}
+            />
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: '8px' }}
               disabled={loading}
-              size="large"
             >
-              Bilgileri Güncelle
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Değişiklikleri Kaydet'}
             </Button>
-            {loading && <CircularProgress size={24} sx={{ position: 'absolute', top: '50%', left: '50%', mt: '-12px', ml: '-12px' }} />}
           </Box>
         </Box>
       </Paper>
@@ -142,4 +171,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile;
+export default ProfilePage;

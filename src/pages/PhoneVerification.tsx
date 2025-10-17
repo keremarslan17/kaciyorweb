@@ -1,29 +1,35 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { ConfirmationResult } from 'firebase/auth'; // Type-only import
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { Container, Box, Typography, TextField, Button, Alert, CircularProgress } from '@mui/material';
+import { signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Container,
+  CircularProgress,
+  Alert,
+  Paper,
+  CssBaseline
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const PhoneVerification: React.FC = () => {
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const { auth, setLoading: setAuthLoading } = useAuth();
+  const [phone, setPhone] = useState<string>('');
+  const [otp, setOtp] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if auth is initialized and if verifier doesn't exist
     if (auth && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'callback': () => {
-          // This callback is called when the reCAPTCHA is solved.
-          // In the case of invisible reCAPTCHA, this is often immediate.
+        'callback': (response: any) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
           console.log("reCAPTCHA verified");
         }
       });
@@ -32,22 +38,29 @@ const PhoneVerification: React.FC = () => {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+        setError("Kimlik doğrulama hizmeti yüklenemedi.");
+        return;
+    }
     setError(null);
     setLoading(true);
-    if (!window.recaptchaVerifier) {
-      setError("reCAPTCHA başlatılamadı. Lütfen sayfayı yenileyip tekrar deneyin.");
-      setLoading(false);
-      return;
-    }
-    const phoneNumber = `+90${phone.replace(/\D/g, '')}`; // Remove non-digits
+
+    const appVerifier = window.recaptchaVerifier;
+    const phoneNumber = `+90${phone.replace(/\\D/g, '')}`;
 
     try {
-      const result = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+      const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       setConfirmationResult(result);
       setError(null);
     } catch (err: any) {
-      console.error(err);
-      setError("SMS gönderilemedi. Telefon numaranızı ve formatını (5xx xxx xx xx) kontrol edin.");
+      console.error("OTP Send Error:", err);
+      if (err.code === 'auth/invalid-phone-number') {
+        setError('Geçersiz telefon numarası. Lütfen kontrol edin.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.');
+      } else {
+        setError('SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.');
+      }
     } finally {
       setLoading(false);
     }
@@ -55,95 +68,98 @@ const PhoneVerification: React.FC = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-    if (!confirmationResult || !currentUser) {
-      setError("Doğrulama hatası. Lütfen işlemi baştan başlatın.");
-      setLoading(false);
+    if (!confirmationResult) {
+      setError("Önce doğrulama kodu gönderilmelidir.");
       return;
     }
+    setError(null);
+    setLoading(true);
 
     try {
       await confirmationResult.confirm(otp);
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, {
-        phone: `+90${phone.replace(/\D/g, '')}`
-      });
+      setError(null);
+      if (setAuthLoading) setAuthLoading(true);
       navigate('/');
     } catch (err: any) {
-      console.error(err);
-      setError("Doğrulama kodu geçersiz veya süresi dolmuş.");
+      console.error("OTP Verify Error:", err);
+      if (err.code === 'auth/invalid-verification-code') {
+        setError('Geçersiz doğrulama kodu.');
+      } else {
+        setError('Kod doğrulanamadı. Lütfen tekrar deneyin.');
+      }
     } finally {
       setLoading(false);
+      if (setAuthLoading) setAuthLoading(false);
     }
   };
 
-  if (!currentUser) {
-    return (
-        <Container maxWidth="xs" sx={{ mt: 8 }}>
-            <Alert severity="warning">Bu sayfaya erişmek için önce giriş yapmanız gerekmektedir. Lütfen giriş sayfasına yönlenin.</Alert>
-        </Container>
-    );
-  }
-
   return (
     <Container component="main" maxWidth="xs">
-      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', p: 4, bgcolor: 'white', borderRadius: 2, boxShadow: 3 }}>
-        <Typography component="h1" variant="h5" color="text.primary">
+      <CssBaseline />
+      <Paper elevation={6} sx={{ marginTop: 8, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '16px' }}>
+        <div id="recaptcha-container"></div>
+        <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
           Telefon Doğrulama
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
-            Devam etmek için lütfen telefon numaranızı doğrulayın.
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+          {!confirmationResult
+            ? 'Telefon numaranızı girin, size bir doğrulama kodu gönderelim.'
+            : 'Telefonunuza gelen 6 haneli kodu girin.'}
         </Typography>
 
+        {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+
         {!confirmationResult ? (
-          <Box component="form" onSubmit={handleSendOtp} sx={{ mt: 3, width: '100%' }}>
+          <Box component="form" onSubmit={handleSendOtp} sx={{ width: '100%' }}>
             <TextField
               margin="normal"
               required
               fullWidth
+              id="phone"
               label="Telefon Numarası (5xx xxx xx xx)"
+              name="phone"
               autoComplete="tel"
+              autoFocus
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              placeholder="555 123 4567"
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: '8px' }}
               disabled={loading}
-              sx={{ mt: 3, py: 1.5 }}
             >
-              {loading ? <CircularProgress size={24} /> : "Doğrulama Kodu Gönder"}
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Kod Gönder'}
             </Button>
           </Box>
         ) : (
-          <Box component="form" onSubmit={handleVerifyOtp} sx={{ mt: 3, width: '100%' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: 'center' }}>
-              {`+90${phone.replace(/\D/g, '')}`} numarasına gönderilen 6 haneli kodu girin.
-            </Typography>
+          <Box component="form" onSubmit={handleVerifyOtp} sx={{ width: '100%' }}>
             <TextField
               margin="normal"
               required
               fullWidth
+              id="otp"
               label="Doğrulama Kodu"
+              name="otp"
+              autoFocus
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
+              inputProps={{ maxLength: 6 }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: '8px' }}
               disabled={loading}
-              sx={{ mt: 3, py: 1.5 }}
             >
-               {loading ? <CircularProgress size={24} /> : "Doğrula ve Devam Et"}
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Doğrula'}
             </Button>
           </Box>
         )}
-        {error && <Alert severity="error" sx={{ mt: 2, width: '100%' }}>{error}</Alert>}
-      </Box>
-      <div id="recaptcha-container"></div>
+      </Paper>
     </Container>
   );
 };
