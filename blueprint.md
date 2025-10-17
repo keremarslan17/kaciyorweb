@@ -1,4 +1,4 @@
-"# Proje: Kaçıyor React Uygulaması
+# Proje: Kaçıyor React Uygulaması
 
 ## Genel Hedef
 Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmesini, uygulama sayesinde hangi işletmede ne kadar indirimi olduğunu, ve işletmelere gitmeden indirimli menülerini görmesini sağlayan bir  sağlayan bir mobil uygulama. kaciyor.com adında bir websitesi de var bu web app de aynı işlevleri kullanıyor ve bu ikisi tamamen aynı server ve backendi kullanmalı, birinde yapılan değişiklik diğerinde de anında gözükmeli. Bu uygulama hep IOS hem Android de yayınlanacak. Web versyonu da react kullanılarak kodlanacak.
@@ -6,13 +6,14 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 ## Özellikler (Features)
 
 ### 1. Kullanıcı Kimlik Doğrulama (Authentication)
-- [ ] E-posta ve şifre ile kayıt olma ekranı.
-- [ ] Giriş yapma ekranı.
+- [x] E-posta ve şifre ile kayıt olma ekranı.
+- [x] Giriş yapma ekranı.
+- [x] Oturumu kapatma işlevselliği.
 - [ ] Şifremi unuttum akışı.
 - [ ] Google ile giriş yapma seçeneği. Google ile giriş yaparken isim soyisim ve e posta verileri toplanır.
-Giriş yapılırken telefon numarası istenir ve doğrulama kodu gönderilir.
+- [ ] Giriş yapılırken telefon numarası istenir ve doğrulama kodu gönderilir.
 
-Profilim sekmesi: Buradan bilgiler güncellenebilir, isim soyisim, telefon numarası, e posta, okul, adres. Telefon numarası ve e posta guncellenirken tekrar doğrulama kodu gönderilir.
+**Profilim sekmesi:** Buradan bilgiler güncellenebilir, isim soyisim, telefon numarası, e posta, okul, adres. Telefon numarası ve e posta guncellenirken tekrar doğrulama kodu gönderilir.
 
 ### 2. Harita Görünümü (Anasayfa)
 - [ ] Kullanıcının mevcut konumunu gösteren bir harita.
@@ -20,8 +21,9 @@ Profilim sekmesi: Buradan bilgiler güncellenebilir, isim soyisim, telefon numar
 - [ ] Bir iğneye tıklandığında restorantın menüsü için bir bağlantı ve adres indirim oranı gibi bilgileri gösteren bir kart.
 
 ### 3. İşletme Menü Sayfası
-- [ ] İşletmenin indirimli menüsü ve indirim oranları.
-- [ ] Menüden ürünleri sepete ekleme, sepetten çıkarma ve sepeti düzenleme ve masa numarası girme.
+- [x] İşletmenin menüsü veritabanından dinamik olarak yükleniyor.
+- [ ] Menüden ürünleri sepete ekleme, sepetten çıkarma ve sepeti düzenleme.
+- [ ] Masa numarası girme.
 - [ ] Sepeti onayla butonu, sepeti onayla butonuna basılınca sepet içerikleri kullanıcı bilgileri, masa numarası, zaman gibi damgalarla her seferinde benzersiz bir qr kod oluşturma.
 
 ### 4. İşletmeci Kontrol Paneli
@@ -55,22 +57,14 @@ Bu bölümde projenin teknik altyapısı ve tamamlanan adımlar listelenmektedir
 *   **Backend & Altyapı:** Firebase
 *   **Versiyon Kontrolü:** Git & GitHub
 
-### Kurulumu Tamamlanan Firebase Servisleri
-*   **Authentication:** Kullanıcı girişi ve kayıt işlemleri için altyapı hazır.
-*   **Firestore:** Veritabanı kuralları (sadece giriş yapanlar yazabilir) ile birlikte kuruldu.
-*   **Hosting:** Proje canlıya alındı ve `dist` klasöründen yayın yapıyor.
-*   **Storage:** Dosya depolama kuralları (sadece giriş yapanlar okuyup yazabilir) ile hazırlandı.
-*   **Functions:** Örnek bir "helloWorld" fonksiyonu ile altyapı oluşturuldu.
-*   **Realtime Database:** Temel kurallar ile yapılandırıldı.
-*   **Emulators:** Yerel geliştirme ortamı için tüm servisleri içerecek şekilde ayarlandı.
-
-### Mevcut Durum
+### Tamamlanan Adımlar
 *   **[Yapıldı]** Proje, `kaciyorortak` Firebase projesine bağlandı.
 *   **[Yapıldı]** Tüm Firebase servisleri için temel yapılandırma dosyaları (`firebase.json`, `.rules` dosyaları vb.) oluşturuldu.
-*   **[Yapıldı]** Varsayılan React projesi derlenip Firebase Hosting üzerinden canlıya alındı.
+*   **[Yapıldı]** Proje canlıya alındı ve `dist` klasöründen yayın yapıyor.
 *   **[Yapıldı]** Proje, bir GitHub deposuna (`https://github.com/keremarslan17/kaciyorweb`) bağlandı.
-*   **[Henüz Başlanmadı]** Projeye özel bir tasarım veya arayüz (UI/UX) geliştirilmedi.
-*   **[Henüz Başlanmadı]** Uygulamanın temel özellikleri (ilan oluşturma, arama vb.) kodlanmadı.
+*   **[Yapıldı]** Proje bağımlılıkları ve build sistemi hataları giderildi.
+*   **[Yapıldı]** Temel kullanıcı kimlik doğrulama (Giriş, Kayıt) ve oturum yönetimi (Çıkış Yap) özellikleri eklendi.
+*   **[Başlangıç Aşamasında]** Menü ve Sepet sistemi.
 
 ---
 

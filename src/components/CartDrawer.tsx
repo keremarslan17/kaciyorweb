@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, Paper } from '@mui/material';
+import React, { useState } from 'react';
+import { Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, Paper, CircularProgress, Alert } from '@mui/material';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -15,17 +15,31 @@ interface CartDrawerProps {
 }
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
-  const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, clearCart, checkout } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleCheckout = () => {
-    if (user) {
-      console.log('Proceeding to checkout');
-      onClose();
-    } else {
+  const handleCheckout = async () => {
+    if (!user) {
       onClose();
       navigate('/login');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      await checkout();
+      onClose();
+      // Optionally, show a success message to the user
+      alert('Siparişiniz başarıyla alındı!');
+    } catch (err) {
+      setError('Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,6 +63,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
           </Box>
         ) : (
           <>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             <List sx={{ flexGrow: 1, overflow: 'auto' }}>
               {cartItems.map((item) => (
                 <ListItem key={item.id} divider>
@@ -77,8 +92,9 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
                 fullWidth 
                 sx={{ mt: 2 }} 
                 onClick={handleCheckout}
+                disabled={loading}
               >
-                Siparişi Tamamla
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Siparişi Tamamla'}
               </Button>
               <Button 
                 variant="text" 
