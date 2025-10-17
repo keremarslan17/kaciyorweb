@@ -35,6 +35,9 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [x] İşletmeciye özel kontrol paneli arayüzü.
 - [x] Güvenli bir şekilde yeni garson ekleme (Cloud Function ile).
 - [x] Mevcut garsonları listeleme.
+- [ ] **İndirim Yönetimi:** Seçili ürünlere veya tüm ürünlere yüzde veya tutar olarak indirim uygulama.
+- [ ] **Satış Raporları:** Günlük, haftalık ve aylık satışları, adetleri ve ciroları detaylı olarak görme.
+- [ ] **Restoran Bilgileri:** Restoran ile ilgili tüm bilgileri düzenleyebilme.
 - [ ] Menü ve indirim yönetimi.
 - [ ] Garson silme.
 
