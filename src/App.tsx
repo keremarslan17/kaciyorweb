@@ -1,34 +1,25 @@
 
-import React, { useState, Suspense } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ThemeProvider } from '@mui/material/styles';
-import { CssBaseline, Container, CircularProgress, Box } from '@mui/material';
+import { CssBaseline, Container } from '@mui/material';
 import theme from './theme';
 
-// Components
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import CartDrawer from './components/CartDrawer';
 
-// LAZY LOADING: Dynamically import pages
-const Home = React.lazy(() => import('./pages/Home'));
-const Login = React.lazy(() => import('./pages/Login'));
-const Register = React.lazy(() => import('./pages/Register'));
-const Profile = React.lazy(() => import('./pages/Profile'));
-const RestaurantMenu = React.lazy(() => import('./pages/RestaurantMenu'));
-const AdminDashboard = React.lazy(() => import('./pages/Admin'));
-const BusinessOwnerDashboard = React.lazy(() => import('./pages/BusinessOwner'));
-const PhoneVerification = React.lazy(() => import('./pages/PhoneVerification'));
-const WaiterDashboard = React.lazy(() => import('./pages/WaiterDashboard'));
-
-// A simple fallback component to show while pages are loading
-const PageLoader = () => (
-  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-    <CircularProgress />
-  </Box>
-);
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import RestaurantMenu from './pages/RestaurantMenu';
+import AdminDashboard from './pages/Admin';
+import BusinessOwnerDashboard from './pages/BusinessOwner';
+import PhoneVerification from './pages/PhoneVerification';
+import WaiterDashboard from './pages/WaiterDashboard';
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -41,35 +32,32 @@ function App() {
           <CartProvider>
             <Navbar onCartOpen={() => setCartOpen(true)} />
             <Container sx={{ mt: 4, mb: 4 }}>
-              {/* Use Suspense to show a loader while pages are being loaded */}
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/restaurant/:restaurantId" element={<RestaurantMenu />} />
-                  <Route path="/phone-verification" element={<PhoneVerification />} />
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/restaurant/:restaurantId" element={<RestaurantMenu />} />
+                <Route path="/phone-verification" element={<PhoneVerification />} />
 
-                  {/* Protected Routes with Role-Based Access Control */}
-                  <Route 
-                    path="/profile" 
-                    element={<ProtectedRoute><Profile /></ProtectedRoute>} 
-                  />
-                  <Route 
-                    path="/admin" 
-                    element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} 
-                  />
-                  <Route 
-                    path="/business" 
-                    element={<ProtectedRoute allowedRoles={['businessOwner', 'admin']}><BusinessOwnerDashboard /></ProtectedRoute>} 
-                  />
-                  <Route 
-                    path="/waiter" 
-                    element={<ProtectedRoute allowedRoles={['waiter', 'admin']}><WaiterDashboard /></ProtectedRoute>} 
-                  />
-                </Routes>
-              </Suspense>
+                {/* RE-IMPLEMENTED: Protected Routes with Role-Based Access Control */}
+                <Route 
+                  path="/profile" 
+                  element={<ProtectedRoute><Profile /></ProtectedRoute>} 
+                />
+                <Route 
+                  path="/admin" 
+                  element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} 
+                />
+                <Route 
+                  path="/business" 
+                  element={<ProtectedRoute allowedRoles={['businessOwner', 'admin']}><BusinessOwnerDashboard /></ProtectedRoute>} 
+                />
+                <Route 
+                  path="/waiter" 
+                  element={<ProtectedRoute allowedRoles={['waiter', 'admin']}><WaiterDashboard /></ProtectedRoute>} 
+                />
+              </Routes>
             </Container>
             <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
           </CartProvider>

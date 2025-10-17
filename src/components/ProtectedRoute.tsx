@@ -15,32 +15,31 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <CircularProgress />
       </Box>
     );
   }
 
+  // 1. If user is not logged in, redirect to login page.
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // 2. If user is logged in but profile isn't loaded yet (edge case), or doesn't exist.
   if (!userProfile) {
-    console.error("Auth Error: User exists in Auth, but not in Firestore.");
+    // This can happen briefly. A loading screen is shown above. If it persists, it's an error.
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
-  // RE-IMPLEMENTED: Phone verification bypass for privileged roles
-  const isPrivilegedRole = ['admin', 'businessOwner', 'waiter'].includes(userProfile.role);
-  if (!userProfile.phoneVerified && !isPrivilegedRole) {
-      return <Navigate to="/phone-verification" state={{ from: location }} replace />;
-  }
     
-  // RE-IMPLEMENTED: Role-based access control
+  // 3. If the route requires a specific role, check if the user has it.
   if (allowedRoles && !allowedRoles.includes(userProfile.role)) {
+      // If the user's role is not allowed, redirect to the home page.
       return <Navigate to="/" replace />;
   }
 
+  // If all checks pass, render the component.
+  // The problematic phone verification redirect has been REMOVED.
   return children;
 };
 

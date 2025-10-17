@@ -21,18 +21,26 @@ const Navbar: React.FC<{ onCartOpen: () => void }> = ({ onCartOpen }) => {
 
     const cartItemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
-    // Determine if the logged-in user is a staff member
     const isStaff = userProfile && (userProfile.role === 'admin' || userProfile.role === 'businessOwner' || userProfile.role === 'waiter');
 
     return (
-        <AppBar position="static">
+        // REVERTED: Applying styles for shape AND color from the desired version.
+        <AppBar 
+            position="static" 
+            sx={{ 
+                borderRadius: 2, 
+                margin: 'auto', 
+                mt: 2, 
+                maxWidth: '95%',
+                backgroundColor: '#468e8b' // The specific teal color from the desired version
+            }}
+        >
             <Toolbar>
                 <Typography variant="h6" component={RouterLink} to="/" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
                     Kaçıyor
                 </Typography>
                 {user ? (
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {/* Only show Home and Cart icons if the user is NOT staff */}
                         {!isStaff && (
                             <>
                                 <IconButton component={RouterLink} to="/" color="inherit">
@@ -46,7 +54,6 @@ const Navbar: React.FC<{ onCartOpen: () => void }> = ({ onCartOpen }) => {
                             </>
                         )}
 
-                        {/* Add role-specific panel links for staff */}
                         {userProfile?.role === 'admin' && <Button color="inherit" component={RouterLink} to="/admin">Admin Paneli</Button>}
                         {userProfile?.role === 'businessOwner' && <Button color="inherit" component={RouterLink} to="/business">İşletmeci Paneli</Button>}
                         {userProfile?.role === 'waiter' && <Button color="inherit" component={RouterLink} to="/waiter">Garson Paneli</Button>}
