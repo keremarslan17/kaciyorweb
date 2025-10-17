@@ -20,6 +20,14 @@ const Navbar: React.FC<NavbarProps> = ({ onCartOpen }) => {
   const { cartState } = useCart();
   const cartItemCount = cartState.items.reduce((count, item) => count + item.quantity, 0);
 
+  const renderOwnerNav = () => (
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Button color="inherit" startIcon={<ExitToAppIcon />} onClick={logout}>
+        Çıkış Yap
+      </Button>
+    </Box>
+  );
+
   const renderWaiterNav = () => (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <Button color="inherit" startIcon={<ExitToAppIcon />} onClick={logout}>
@@ -49,6 +57,9 @@ const Navbar: React.FC<NavbarProps> = ({ onCartOpen }) => {
 
   const renderGuestNav = () => (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
+       <IconButton color="inherit" component={Link} to="/">
+        <HomeIcon />
+      </IconButton>
       <Button color="inherit" component={Link} to="/login" startIcon={<LoginIcon />}>
         Giriş Yap
       </Button>
@@ -58,16 +69,40 @@ const Navbar: React.FC<NavbarProps> = ({ onCartOpen }) => {
     </Box>
   );
 
+  const getNavForRole = () => {
+    if (!user || !userProfile) return renderGuestNav();
+    switch (userProfile.role) {
+      case 'businessOwner':
+        return renderOwnerNav();
+      case 'waiter':
+        return renderWaiterNav();
+      case 'user':
+      default:
+        return renderUserNav();
+    }
+  }
+
+  const getLogoLink = () => {
+     if (!user || !userProfile) return '/';
+     switch (userProfile.role) {
+       case 'businessOwner':
+         return '/business';
+       case 'waiter':
+         return '/waiter';
+       default:
+         return '/';
+     }
+  }
+
   return (
     <AppBar position="static" sx={{ borderRadius: 2, margin: 'auto', mt: 2, maxWidth: '95%' }}>
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          <Link to={userProfile?.role === 'waiter' ? '/waiter' : '/'} style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Link to={getLogoLink()} style={{ textDecoration: 'none', color: 'inherit' }}>
             Kaçıyor
           </Link>
         </Typography>
-        
-        {user && userProfile?.role === 'waiter' ? renderWaiterNav() : (user ? renderUserNav() : renderGuestNav())}
+        {getNavForRole()}
       </Toolbar>
     </AppBar>
   );
