@@ -15,6 +15,13 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
+// Extend the Window interface to include the recaptchaVerifier
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
+}
+
 const PhoneVerification: React.FC = () => {
   const { auth, setLoading: setAuthLoading } = useAuth();
   const [phone, setPhone] = useState<string>('');
@@ -28,8 +35,7 @@ const PhoneVerification: React.FC = () => {
     if (auth && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        'callback': () => {
           console.log("reCAPTCHA verified");
         }
       });
@@ -38,7 +44,7 @@ const PhoneVerification: React.FC = () => {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
+    if (!auth || !window.recaptchaVerifier) {
         setError("Kimlik doğrulama hizmeti yüklenemedi.");
         return;
     }
@@ -54,13 +60,7 @@ const PhoneVerification: React.FC = () => {
       setError(null);
     } catch (err: any) {
       console.error("OTP Send Error:", err);
-      if (err.code === 'auth/invalid-phone-number') {
-        setError('Geçersiz telefon numarası. Lütfen kontrol edin.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.');
-      } else {
-        setError('SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.');
-      }
+      setError('SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.');
     } finally {
       setLoading(false);
     }
@@ -82,11 +82,7 @@ const PhoneVerification: React.FC = () => {
       navigate('/');
     } catch (err: any) {
       console.error("OTP Verify Error:", err);
-      if (err.code === 'auth/invalid-verification-code') {
-        setError('Geçersiz doğrulama kodu.');
-      } else {
-        setError('Kod doğrulanamadı. Lütfen tekrar deneyin.');
-      }
+      setError('Kod doğrulanamadı. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
       if (setAuthLoading) setAuthLoading(false);
@@ -96,46 +92,39 @@ const PhoneVerification: React.FC = () => {
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
-      <Paper elevation={6} sx={{ marginTop: 8, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: '16px' }}>
+      <Paper elevation={6} sx={{ marginTop: 8, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div id="recaptcha-container"></div>
-        <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
+        <Typography component="h1" variant="h5">
           Telefon Doğrulama
         </Typography>
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-          {!confirmationResult
-            ? 'Telefon numaranızı girin, size bir doğrulama kodu gönderelim.'
-            : 'Telefonunuza gelen 6 haneli kodu girin.'}
-        </Typography>
-
-        {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+        
+        {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
 
         {!confirmationResult ? (
-          <Box component="form" onSubmit={handleSendOtp} sx={{ width: '100%' }}>
+          <Box component="form" onSubmit={handleSendOtp} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
               required
               fullWidth
               id="phone"
-              label="Telefon Numarası (5xx xxx xx xx)"
+              label="Telefon Numarası"
               name="phone"
-              autoComplete="tel"
               autoFocus
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="555 123 4567"
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: '8px' }}
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Kod Gönder'}
+              {loading ? <CircularProgress size={24} /> : 'Kod Gönder'}
             </Button>
           </Box>
         ) : (
-          <Box component="form" onSubmit={handleVerifyOtp} sx={{ width: '100%' }}>
+          <Box component="form" onSubmit={handleVerifyOtp} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
               required
@@ -146,16 +135,15 @@ const PhoneVerification: React.FC = () => {
               autoFocus
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              inputProps={{ maxLength: 6 }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: '8px' }}
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Doğrula'}
+              {loading ? <CircularProgress size={24} /> : 'Doğrula'}
             </Button>
           </Box>
         )}

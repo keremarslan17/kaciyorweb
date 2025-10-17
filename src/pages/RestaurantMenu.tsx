@@ -28,7 +28,6 @@ interface MenuItem {
 interface Restaurant {
     name: string;
     cuisine: string;
-    // Add other restaurant details if needed
 }
 
 const RestaurantMenuPage: React.FC = () => {
@@ -44,14 +43,12 @@ const RestaurantMenuPage: React.FC = () => {
 
             try {
                 setLoading(true);
-                // Fetch restaurant details
                 const restaurantRef = doc(db, 'restaurants', restaurantId);
                 const restaurantSnap = await getDoc(restaurantRef);
                 if (restaurantSnap.exists()) {
                     setRestaurant(restaurantSnap.data() as Restaurant);
                 }
 
-                // Fetch menu items for the restaurant
                 const menuRef = collection(db, 'restaurants', restaurantId, 'menu');
                 const menuSnap = await getDocs(menuRef);
                 const items = menuSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as MenuItem));
@@ -59,7 +56,6 @@ const RestaurantMenuPage: React.FC = () => {
 
             } catch (error) {
                 console.error("Error fetching restaurant menu:", error);
-                // Handle error state
             } finally {
                 setLoading(false);
             }
@@ -86,7 +82,7 @@ const RestaurantMenuPage: React.FC = () => {
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4 }}>
-            <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Box sx={{ mb: 4 }}>
                 <Typography variant="h3" gutterBottom>{restaurant.name}</Typography>
                 <Chip label={restaurant.cuisine} color="primary" />
             </Box>

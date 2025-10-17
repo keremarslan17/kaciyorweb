@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, Paper } from '@mui/material';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,13 +21,10 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
 
   const handleCheckout = () => {
     if (user) {
-      // User is logged in, proceed to checkout
       console.log('Proceeding to checkout');
-      onClose(); // Close the drawer
-      // navigate('/checkout'); // Navigate to a checkout page if you have one
+      onClose();
     } else {
-      // User is not logged in, redirect to login page
-      onClose(); // Close the drawer first
+      onClose();
       navigate('/login');
     }
   };
