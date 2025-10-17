@@ -10,15 +10,16 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [x] Giriş yapma ekranı.
 - [x] Oturumu kapatma işlevselliği.
 - [ ] Şifremi unuttum akışı.
-- [ ] Google ile giriş yapma seçeneği. Google ile giriş yaparken isim soyisim ve e posta verileri toplanır.
-- [ ] Giriş yapılırken telefon numarası istenir ve doğrulama kodu gönderilir.
+- [ ] Google ile giriş yapma seçeneği.
+- [ ] Telefonla doğrulama.
 
-**Profilim sekmesi:** Buradan bilgiler güncellenebilir, isim soyisim, telefon numarası, e posta, okul, adres. Telefon numarası ve e posta guncellenirken tekrar doğrulama kodu gönderilir.
+**Profilim sekmesi:** Bilgilerin güncellenmesi.
 
 ### 2. Harita Görünümü (Anasayfa)
-- [ ] Kullanıcının mevcut konumunu gösteren bir harita.
-- [ ] Harita üzerinde default olarak 10km çapında(ayarlanabilir) react native maps ile anlaşmalı olduğumuz kafe ve restoranları iğne (pin) ile gösterme.
-- [ ] Bir iğneye tıklandığında restorantın menüsü için bir bağlantı ve adres indirim oranı gibi bilgileri gösteren bir kart.
+- [x] Google Haritalar entegrasyonu ile restoranları gösterme.
+- [x] Flaş İndirimler, Öne Çıkan Restoranlar ve İşletmelere yönelik reklam alanları eklendi.
+- [ ] Kullanıcının mevcut konumunu haritada gösterme.
+- [ ] Bir iğneye tıklandığında detay kartı gösterme.
 
 ### 3. İşletme Menü Sayfası
 - [x] İşletmenin menüsü veritabanından dinamik olarak yükleniyor.
@@ -26,33 +27,26 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [x] Sepeti onayla butonu ile sipariş oluşturma.
 - [x] Sepet artık sadece tek bir restorana özel çalışıyor.
 - [ ] Masa numarası girme.
-- [ ] Sepeti onayla butonuna basılınca sepet içerikleri kullanıcı bilgileri, masa numarası, zaman gibi damgalarla her seferinde benzersiz bir qr kod oluşturma.
+- [ ] Sipariş onayı sonrası QR kod oluşturma.
 
 ### 4. İşletmeci Kontrol Paneli
-
--İşletmeci kullanıcı adı ve şifresiyle kendi restorantının kontrol paneline erişir. Bu panelde işletmesinin menüsünü düzenleyebilir fiyatları değiştirebilir istediği ürünlere indirim uygulayıp indirimleri kaldırabilir. Yeni ürünler ekleyip mevcut ürünleri çıkarabilir. Restoranına garson tanımlayabilir.
+- [ ] Menü ve indirim yönetimi.
+- [ ] Garson tanımlama.
 
 ### 5. Garson Paneli
+- [ ] Aktif siparişleri görme.
+- [ ] QR kod ile sipariş onayı.
 
--Garsonlar aktif siparişleri görebilir, yeni sipariş al butonuyla yeni sipariş alabilir. Bir kişi sepeti onaylaya basınca garson paneline masa numarasını içeren bildirim gider. Garson kamerayı açarak qr kodu okutur, qr kod okutulunca ekranında sipariş detayları gözükür. Siparişi onaylaya basınca sipariş alınmış olur.
-
-### 6. Kazanç modeli
--QR kod okutularak verilen indirimli sipariş tutarının %5 i kar olarak hesaplanır, anlık olarak güncellenir ve cari ödemeler sekmesinde işletcei kontrol panelinde gözükür. Ayrıca işletmeci kontrol panelinde reklam ver seceneği bulunur. Bu seceneğe basınca bir mailbox açılır ve info@kacior.com adresine mail göndermesi istenir.
-
+### 6. Kazanç Modeli
+- [ ] Siparişlerden komisyon hesaplama.
+- [ ] İşletmeler için reklam modeli.
 
 ### 7. Admin Paneli
-Sadece belirli e posta ve şifreyle girilir. Yeni restoran ekleme ve resotran silme yetkilerine sahip olur. Tum panellere erişimi vardır. İşletmenin konumu dahil tüm bilgileri düzenler."
-
-TIRNAK ICINE ALDIGIM KISIM KACIYOR REACT MOBIL UYGULAMASI. AYNI YAPIYI VERITABANINI VE BACKENDI KULLANAN BIR WEB APP INSA EDIYORUZ. MOBIL UYGULAMADA SEPETE EKLENEN WEBDE DE SEPETTE GOZUKSUN. BUTONLAR YAPILAR VE TASARIM TAMAMEN AYNI OLSUN. Yemeksepeti, getiryemek ve trendyolgo gibi dusun. kaciyorreact mobil kismiydi, bu proje kaciyorweb1 de web kismi. 
-
-
-
+- [ ] Restoran ve kullanıcı yönetimi.
 
 ---
 
-## 2. Proje Detayları ve Mevcut Durum
-
-Bu bölümde projenin teknik altyapısı ve tamamlanan adımlar listelenmektedir.
+## Proje Detayları ve Mevcut Durum
 
 ### Teknolojiler
 *   **Frontend:** React (Vite ile oluşturuldu)
@@ -61,12 +55,12 @@ Bu bölümde projenin teknik altyapısı ve tamamlanan adımlar listelenmektedir
 
 ### Tamamlanan Adımlar
 *   **[Yapıldı]** Proje, `kaciyorortak` Firebase projesine bağlandı.
-*   **[Yapıldı]** Tüm Firebase servisleri için temel yapılandırma dosyaları (`firebase.json`, `.rules` dosyaları vb.) oluşturuldu.
-*   **[Yapıldı]** Proje canlıya alındı ve `dist` klasöründen yayın yapıyor.
-*   **[Yapıldı]** Proje, bir GitHub deposuna (`https://github.com/keremarslan17/kaciyorweb`) bağlandı.
-*   **[Yapıldı]** Proje bağımlılıkları ve build sistemi hataları giderildi.
-*   **[Yapıldı]** Temel kullanıcı kimlik doğrulama (Giriş, Kayıt) ve oturum yönetimi (Çıkış Yap) özellikleri eklendi.
-*   **[Yapıldı]** Tamamen işlevsel, restorana özel dinamik sepet sistemi (Ekleme, Çıkarma, Güncelleme, Sipariş Verme).
+*   **[Yapıldı]** Tüm Firebase servisleri için temel yapılandırma dosyaları oluşturuldu.
+*   **[Yapıldı]** Proje canlıya alındı.
+*   **[Yapıldı]** Proje, bir GitHub deposuna bağlandı.
+*   **[Yapıldı]** Build sistemi ve proje bağımlılıkları düzeltildi.
+*   **[Yapıldı]** Temel kullanıcı kimlik doğrulama (Giriş, Kayıt, Çıkış) özellikleri eklendi.
+*   **[Yapıldı]** Tamamen işlevsel, restorana özel dinamik sepet sistemi.
+*   **[Yapıldı]** Google Haritalar entegrasyonu ve dinamik Ana Sayfa tasarımı.
 
 ---
-
