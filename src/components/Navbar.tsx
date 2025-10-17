@@ -17,8 +17,8 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ onCartOpen }) => {
   const { user, logout } = useAuth();
-  const { cartItems } = useCart();
-  const cartItemCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+  const { cartState } = useCart();
+  const cartItemCount = cartState.items.reduce((count, item) => count + item.quantity, 0);
 
   return (
     <AppBar position="static" sx={{ borderRadius: 2, margin: 'auto', mt: 2, maxWidth: '95%' }}>

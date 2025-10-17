@@ -14,7 +14,8 @@ import {
     Grid, 
     Box, 
     CircularProgress,
-    Chip
+    Chip,
+    CardMedia
 } from '@mui/material';
 
 interface MenuItem {
@@ -23,11 +24,13 @@ interface MenuItem {
     description: string;
     price: number;
     category: string;
+    imageUrl?: string;
 }
 
 interface Restaurant {
     name: string;
     cuisine: string;
+    imageUrl?: string;
 }
 
 const RestaurantMenuPage: React.FC = () => {
@@ -38,76 +41,67 @@ const RestaurantMenuPage: React.FC = () => {
     const { addToCart } = useCart();
 
     useEffect(() => {
-        const fetchMenu = async () => {
+        const fetchMenuData = async () => {
             if (!restaurantId) return;
-
+            setLoading(true);
             try {
-                setLoading(true);
                 const restaurantRef = doc(db, 'restaurants', restaurantId);
                 const restaurantSnap = await getDoc(restaurantRef);
                 if (restaurantSnap.exists()) {
                     setRestaurant(restaurantSnap.data() as Restaurant);
+                } else {
+                    console.log("No such restaurant!");
                 }
 
                 const menuRef = collection(db, 'restaurants', restaurantId, 'menu');
                 const menuSnap = await getDocs(menuRef);
                 const items = menuSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as MenuItem));
                 setMenuItems(items);
-
             } catch (error) {
-                console.error("Error fetching restaurant menu:", error);
+                console.error("Error fetching restaurant data:", error);
             } finally {
                 setLoading(false);
             }
         };
-
-        fetchMenu();
+        fetchMenuData();
     }, [restaurantId]);
 
+    const handleAddToCart = (item: Omit<MenuItem, 'description' | 'category' | 'imageUrl'>) => {
+        if (restaurantId && restaurant) {
+            addToCart(item, { id: restaurantId, name: restaurant.name });
+        }
+    };
+
     if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <CircularProgress />
-            </Box>
-        );
+        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
     }
 
     if (!restaurant) {
-        return (
-            <Container>
-                <Typography variant="h5" align="center" sx={{ mt: 5 }}>Restoran bulunamadı.</Typography>
-            </Container>
-        );
+        return <Typography variant="h5" align="center" sx={{ mt: 5 }}>Restoran bulunamadı.</Typography>;
     }
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4 }}>
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h3" gutterBottom>{restaurant.name}</Typography>
-                <Chip label={restaurant.cuisine} color="primary" />
-            </Box>
+            <Card sx={{ mb: 4 }}>
+                {restaurant.imageUrl && <CardMedia component="img" height="200" image={restaurant.imageUrl} alt={restaurant.name} />}
+                <CardContent>
+                    <Typography variant="h4" gutterBottom>{restaurant.name}</Typography>
+                    <Chip label={restaurant.cuisine} color="primary" />
+                </CardContent>
+            </Card>
             
             <Grid container spacing={3}>
                 {menuItems.map((item) => (
                     <Grid item key={item.id} xs={12} sm={6} md={4}>
-                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <Typography gutterBottom variant="h5" component="div">
-                                    {item.name}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {item.description}
-                                </Typography>
-                                <Typography variant="h6" color="primary" sx={{ mt: 2 }}>
-                                    ₺{item.price.toFixed(2)}
-                                </Typography>
+                        <Card sx={{ height: '100%' }}>
+                            {item.imageUrl && <CardMedia component="img" height="140" image={item.imageUrl} alt={item.name} />}
+                            <CardContent>
+                                <Typography gutterBottom variant="h5">{item.name}</Typography>
+                                <Typography variant="body2" color="text.secondary">{item.description}</Typography>
+                                <Typography variant="h6" color="primary" sx={{ mt: 2 }}>₺{item.price.toFixed(2)}</Typography>
                             </CardContent>
                             <CardActions>
-                                <Button 
-                                    size="small" 
-                                    variant="contained"
-                                    onClick={() => addToCart({ id: item.id, name: item.name, price: item.price })}
-                                >
+                                <Button size="small" variant="contained" onClick={() => handleAddToCart(item)}>
                                     Sepete Ekle
                                 </Button>
                             </CardActions>

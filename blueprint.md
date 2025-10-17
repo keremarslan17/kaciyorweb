@@ -24,6 +24,7 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [x] İşletmenin menüsü veritabanından dinamik olarak yükleniyor.
 - [x] Menüden ürünleri sepete ekleme, sepetten çıkarma ve sepeti düzenleme.
 - [x] Sepeti onayla butonu ile sipariş oluşturma.
+- [x] Sepet artık sadece tek bir restorana özel çalışıyor.
 - [ ] Masa numarası girme.
 - [ ] Sepeti onayla butonuna basılınca sepet içerikleri kullanıcı bilgileri, masa numarası, zaman gibi damgalarla her seferinde benzersiz bir qr kod oluşturma.
 
@@ -65,7 +66,7 @@ Bu bölümde projenin teknik altyapısı ve tamamlanan adımlar listelenmektedir
 *   **[Yapıldı]** Proje, bir GitHub deposuna (`https://github.com/keremarslan17/kaciyorweb`) bağlandı.
 *   **[Yapıldı]** Proje bağımlılıkları ve build sistemi hataları giderildi.
 *   **[Yapıldı]** Temel kullanıcı kimlik doğrulama (Giriş, Kayıt) ve oturum yönetimi (Çıkış Yap) özellikleri eklendi.
-*   **[Yapıldı]** Tamamen işlevsel, dinamik sepet sistemi (Ekleme, Çıkarma, Güncelleme, Sipariş Verme).
+*   **[Yapıldı]** Tamamen işlevsel, restorana özel dinamik sepet sistemi (Ekleme, Çıkarma, Güncelleme, Sipariş Verme).
 
 ---
 

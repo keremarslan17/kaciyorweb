@@ -11,9 +11,15 @@ interface CartItem {
   quantity: number;
 }
 
+interface CartState {
+  restaurantId: string | null;
+  restaurantName: string | null;
+  items: CartItem[];
+}
+
 interface CartContextType {
-  cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
+  cartState: CartState;
+  addToCart: (item: Omit<CartItem, 'quantity'>, restaurantInfo: { id: string; name: string }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -31,53 +37,84 @@ export const useCart = () => {
 };
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartState, setCartState] = useState<CartState>({ restaurantId: null, restaurantName: null, items: [] });
   const { user } = useAuth();
 
   useEffect(() => {
     if (!user) {
       const localCart = localStorage.getItem('localCart');
-      if (localCart) setCartItems(JSON.parse(localCart));
+      if (localCart) setCartState(JSON.parse(localCart));
       return;
     }
 
     const cartRef = doc(db, 'carts', user.uid);
     const unsubscribe = onSnapshot(cartRef, (docSnap) => {
       if (docSnap.exists()) {
-        setCartItems(docSnap.data().items || []);
+        setCartState(docSnap.data() as CartState);
       } else {
-        setCartItems([]);
+        setCartState({ restaurantId: null, restaurantName: null, items: [] });
       }
     });
 
     return () => unsubscribe();
   }, [user]);
 
-  const updateCartInFirestore = async (items: CartItem[]) => {
+  const updateCartInFirestore = async (newCartState: CartState) => {
     if (user) {
       const cartRef = doc(db, 'carts', user.uid);
-      await setDoc(cartRef, { items });
+      await setDoc(cartRef, newCartState);
     } else {
-      localStorage.setItem('localCart', JSON.stringify(items));
+      localStorage.setItem('localCart', JSON.stringify(newCartState));
     }
   };
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    const newItems = [...cartItems];
+  const clearCart = () => {
+    const newState = { restaurantId: null, restaurantName: null, items: [] };
+    setCartState(newState);
+    updateCartInFirestore(newState);
+  };
+
+  const addToCart = (item: Omit<CartItem, 'quantity'>, restaurantInfo: { id: string; name: string }) => {
+    if (cartState.restaurantId && cartState.restaurantId !== restaurantInfo.id) {
+      const isConfirmed = window.confirm(
+        `Farklı bir restorandan ürün ekleyemezsiniz. Mevcut sepetinizdeki ürünler (${cartState.restaurantName}) silinsin ve yeni siparişiniz başlasın mı?`
+      );
+      if (isConfirmed) {
+        const newItems = [{ ...item, quantity: 1 }];
+        const newState = { restaurantId: restaurantInfo.id, restaurantName: restaurantInfo.name, items: newItems };
+        setCartState(newState);
+        updateCartInFirestore(newState);
+      }
+      return; // Stop if user cancels
+    }
+
+    const newItems = [...cartState.items];
     const existingItemIndex = newItems.findIndex(i => i.id === item.id);
     if (existingItemIndex > -1) {
       newItems[existingItemIndex].quantity += 1;
     } else {
       newItems.push({ ...item, quantity: 1 });
     }
-    setCartItems(newItems);
-    updateCartInFirestore(newItems);
+    
+    const newState = { 
+      restaurantId: restaurantInfo.id, 
+      restaurantName: restaurantInfo.name, 
+      items: newItems 
+    };
+    setCartState(newState);
+    updateCartInFirestore(newState);
   };
 
   const removeFromCart = (id: string) => {
-    const newItems = cartItems.filter(item => item.id !== id);
-    setCartItems(newItems);
-    updateCartInFirestore(newItems);
+    const newItems = cartState.items.filter(item => item.id !== id);
+    const newState = { ...cartState, items: newItems };
+    
+    if(newItems.length === 0) {
+      clearCart();
+    } else {
+      setCartState(newState);
+      updateCartInFirestore(newState);
+    }
   };
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -85,26 +122,24 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       removeFromCart(id);
       return;
     }
-    const newItems = cartItems.map(item => (item.id === id ? { ...item, quantity } : item));
-    setCartItems(newItems);
-    updateCartInFirestore(newItems);
-  };
-
-  const clearCart = () => {
-    setCartItems([]);
-    updateCartInFirestore([]);
+    const newItems = cartState.items.map(item => (item.id === id ? { ...item, quantity } : item));
+    const newState = { ...cartState, items: newItems };
+    setCartState(newState);
+    updateCartInFirestore(newState);
   };
 
   const checkout = async () => {
-    if (!user || cartItems.length === 0) {
+    if (!user || cartState.items.length === 0) {
       throw new Error("User not logged in or cart is empty");
     }
 
-    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     
     const orderData = {
       userId: user.uid,
-      items: cartItems,
+      restaurantId: cartState.restaurantId,
+      restaurantName: cartState.restaurantName,
+      items: cartState.items,
       total,
       createdAt: serverTimestamp(),
       status: 'pending', 
@@ -120,7 +155,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, checkout }}>
+    <CartContext.Provider value={{ cartState, addToCart, removeFromCart, updateQuantity, clearCart, checkout }}>
       {children}
     </CartContext.Provider>
   );

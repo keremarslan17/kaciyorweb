@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, Paper, CircularProgress, Alert, Divider } from '@mui/material';
+import { Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, Paper, CircularProgress, Alert, Divider, Chip } from '@mui/material';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +15,7 @@ interface CartDrawerProps {
 }
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
-  const { cartItems, removeFromCart, updateQuantity, clearCart, checkout } = useCart();
+  const { cartState, removeFromCart, updateQuantity, clearCart, checkout } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
       navigate('/login');
       return;
     }
-    if (cartItems.length === 0) {
+    if (cartState.items.length === 0) {
       setError("Sepetiniz boş.");
       return;
     }
@@ -47,21 +47,24 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
   };
 
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+    return cartState.items.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
   };
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <Paper sx={{ width: 320, padding: 2, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexShrink: 0 }}>
           <Typography variant="h6">Sepetim</Typography>
           <IconButton onClick={onClose}>
             <CloseIcon />
           </IconButton>
         </Box>
+        {cartState.restaurantName && (
+          <Chip label={`Restoran: ${cartState.restaurantName}`} size="small" sx={{ mb: 2 }} />
+        )}
         <Divider sx={{ mb: 2 }} />
         
-        {cartItems.length === 0 ? (
+        {cartState.items.length === 0 ? (
           <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
             <ShoppingCartIcon color="disabled" sx={{ fontSize: 80 }} />
             <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>Sepetiniz şu an boş.</Typography>
@@ -70,12 +73,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
           <>
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
             <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0 }}>
-              {cartItems.map((item) => (
+              {cartState.items.map((item) => (
                 <ListItem key={item.id} divider sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                   <ListItemText primary={item.name} secondary={`Fiyat: ₺${item.price.toFixed(2)}`} sx={{ width: '100%', mb: 1 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <IconButton size="small" onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label=" azalt">
+                      <IconButton size="small" onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label="azalt">
                         <RemoveCircleOutlineIcon fontSize="small" />
                       </IconButton>
                       <Typography sx={{ mx: 1.5 }}>{item.quantity}</Typography>
