@@ -22,9 +22,10 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 
 ### 3. İşletme Menü Sayfası
 - [x] İşletmenin menüsü veritabanından dinamik olarak yükleniyor.
-- [ ] Menüden ürünleri sepete ekleme, sepetten çıkarma ve sepeti düzenleme.
+- [x] Menüden ürünleri sepete ekleme, sepetten çıkarma ve sepeti düzenleme.
+- [x] Sepeti onayla butonu ile sipariş oluşturma.
 - [ ] Masa numarası girme.
-- [ ] Sepeti onayla butonu, sepeti onayla butonuna basılınca sepet içerikleri kullanıcı bilgileri, masa numarası, zaman gibi damgalarla her seferinde benzersiz bir qr kod oluşturma.
+- [ ] Sepeti onayla butonuna basılınca sepet içerikleri kullanıcı bilgileri, masa numarası, zaman gibi damgalarla her seferinde benzersiz bir qr kod oluşturma.
 
 ### 4. İşletmeci Kontrol Paneli
 
@@ -64,7 +65,7 @@ Bu bölümde projenin teknik altyapısı ve tamamlanan adımlar listelenmektedir
 *   **[Yapıldı]** Proje, bir GitHub deposuna (`https://github.com/keremarslan17/kaciyorweb`) bağlandı.
 *   **[Yapıldı]** Proje bağımlılıkları ve build sistemi hataları giderildi.
 *   **[Yapıldı]** Temel kullanıcı kimlik doğrulama (Giriş, Kayıt) ve oturum yönetimi (Çıkış Yap) özellikleri eklendi.
-*   **[Başlangıç Aşamasında]** Menü ve Sepet sistemi.
+*   **[Yapıldı]** Tamamen işlevsel, dinamik sepet sistemi (Ekleme, Çıkarma, Güncelleme, Sipariş Verme).
 
 ---
 

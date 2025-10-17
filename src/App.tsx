@@ -9,7 +9,7 @@ import theme from './theme';
 
 // Components
 import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute'; // Corrected the import path
+import ProtectedRoute from './components/ProtectedRoute';
 import CartDrawer from './components/CartDrawer';
 
 // Pages
@@ -24,9 +24,12 @@ import Admin from './pages/Admin';
 import BusinessOwnerDashboard from './pages/BusinessOwner';
 import PhoneVerification from './pages/PhoneVerification';
 
-
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
+
+  const handleCartOpen = () => {
+    setCartOpen(true);
+  };
 
   const handleCartClose = () => {
     setCartOpen(false);
@@ -38,7 +41,7 @@ function App() {
       <Router>
         <AuthProvider>
           <CartProvider>
-            <Navbar />
+            <Navbar onCartOpen={handleCartOpen} />
             <Container sx={{ mt: 4 }}>
               <Routes>
                 {/* Public Routes */}
@@ -49,15 +52,13 @@ function App() {
                 <Route path="/post/:postId" element={<PostDetail />} />
                 <Route path="/phone-verification" element={<PhoneVerification />} />
 
-
                 {/* Protected Routes */}
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/create-post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
                 
-                {/* Admin and Business Routes - Add specific role checks if needed */}
+                {/* Admin and Business Routes */}
                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                 <Route path="/business" element={<ProtectedRoute><BusinessOwnerDashboard /></ProtectedRoute>} />
-
               </Routes>
             </Container>
             <CartDrawer open={cartOpen} onClose={handleCartClose} />

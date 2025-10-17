@@ -1,16 +1,24 @@
 
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, IconButton, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, IconButton, Box, Badge } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
 import HomeIcon from '@mui/icons-material/Home';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  onCartOpen: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onCartOpen }) => {
   const { user, logout } = useAuth();
+  const { cartItems } = useCart();
+  const cartItemCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
   return (
     <AppBar position="static" sx={{ borderRadius: 2, margin: 'auto', mt: 2, maxWidth: '95%' }}>
@@ -30,6 +38,11 @@ const Navbar: React.FC = () => {
             <>
               <IconButton color="inherit" component={Link} to="/profile">
                 <AccountCircleIcon />
+              </IconButton>
+              <IconButton color="inherit" onClick={onCartOpen}>
+                <Badge badgeContent={cartItemCount} color="error">
+                  <ShoppingCartIcon />
+                </Badge>
               </IconButton>
               <Button color="inherit" startIcon={<ExitToAppIcon />} onClick={logout}>
                 Çıkış Yap
