@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { app } from '../firebase';
 import { CircularProgress, Box } from '@mui/material';
 
@@ -8,8 +8,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   auth: any;
+  logout: () => Promise<void>;
   setLoading?: (loading: boolean) => void;
-  currentUser?: User | null; // Keep this for backward compatibility if other components use it
+  currentUser?: User | null; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,12 +40,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => unsubscribe();
   }, [auth]);
 
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
     auth,
+    logout,
     setLoading,
-    currentUser: user // For components that might still use currentUser
+    currentUser: user 
   };
 
   if (loading) {

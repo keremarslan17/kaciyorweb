@@ -10,7 +10,7 @@ import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 
 const Navbar: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <AppBar position="static" sx={{ borderRadius: 2, margin: 'auto', mt: 2, maxWidth: '95%' }}>
@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
               <IconButton color="inherit" component={Link} to="/profile">
                 <AccountCircleIcon />
               </IconButton>
-              <Button color="inherit" startIcon={<ExitToAppIcon />}>
+              <Button color="inherit" startIcon={<ExitToAppIcon />} onClick={logout}>
                 Çıkış Yap
               </Button>
             </>
