@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { GoogleMap, LoadScript, MarkerF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF } from '@react-google-maps/api';
 import { db } from '../firebase';
 import { collection, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { Container, Typography, Box, Paper, Button, Grid, Card, CardContent, CardActions, CircularProgress, Link, Alert } from '@mui/material';
@@ -43,7 +43,11 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string,
+  });
 
   useEffect(() => {
     // Fetch user's location
@@ -55,7 +59,7 @@ const HomePage: React.FC = () => {
             lng: position.coords.longitude,
           };
           setUserPosition(pos);
-          setMapCenter(pos); // Center map on user
+          setMapCenter(pos);
         },
         () => {
           setLocationError("Konum bilgisi alınamadı. Harita varsayılan konumda gösteriliyor.");
@@ -67,6 +71,7 @@ const HomePage: React.FC = () => {
 
     // Fetch restaurants
     const fetchRestaurants = async () => {
+      setLoading(true);
       try {
         const querySnapshot = await getDocs(collection(db, 'restaurants'));
         const restaurantList = querySnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
@@ -85,6 +90,42 @@ const HomePage: React.FC = () => {
 
   const featuredRestaurants = restaurants.slice(0, 2);
 
+  const renderMap = () => {
+    if (loading || !isLoaded) {
+      return <Box display="flex" justifyContent="center" p={5}><CircularProgress /></Box>;
+    }
+    return (
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={mapCenter}
+        zoom={13}
+      >
+        {restaurants.map(r => (
+          <MarkerF 
+            key={r.id} 
+            position={{ lat: r.location.latitude, lng: r.location.longitude }}
+            title={r.name}
+            onClick={() => navigate(`/restaurant/${r.id}`)}
+          />
+        ))}
+        {userPosition && (
+          <MarkerF
+            position={userPosition}
+            title="Konumunuz"
+            icon={{
+              path: 'M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0', // Simple circle SVG path
+              fillColor: '#4285F4',
+              fillOpacity: 1.0,
+              strokeWeight: 2,
+              strokeColor: 'white',
+              scale: 0.6,
+            }}
+          />
+        )}
+      </GoogleMap>
+    );
+  };
+
   return (
     <Container maxWidth="lg" sx={{ my: 4 }}>
       <Box textAlign="center" mb={5}>
@@ -99,42 +140,7 @@ const HomePage: React.FC = () => {
       {locationError && <Alert severity="warning" sx={{ mb: 2 }}>{locationError}</Alert>}
       
       <Box mb={6}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={5}><CircularProgress /></Box>
-        ) : (
-          <LoadScript googleMapsApiKey={mapsApiKey}>
-            <GoogleMap
-              mapContainerStyle={containerStyle}
-              center={mapCenter}
-              zoom={13} // Zoom in a bit more for local view
-            >
-              {/* Restaurant Markers */}
-              {restaurants.map(r => (
-                <MarkerF 
-                  key={r.id} 
-                  position={{ lat: r.location.latitude, lng: r.location.longitude }}
-                  title={r.name}
-                  onClick={() => navigate(`/restaurant/${r.id}`)}
-                />
-              ))}
-              {/* User's Location Marker */}
-              {userPosition && (
-                <MarkerF
-                  position={userPosition}
-                  title="Konumunuz"
-                  icon={{
-                    path: window.google.maps.SymbolPath.CIRCLE,
-                    scale: 8,
-                    fillColor: "#4285F4",
-                    fillOpacity: 1,
-                    strokeWeight: 2,
-                    strokeColor: "white",
-                  }}
-                />
-              )}
-            </GoogleMap>
-          </LoadScript>
-        )}
+        {renderMap()}
       </Box>
 
       <Box mb={6}>

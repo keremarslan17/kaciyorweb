@@ -63,5 +63,6 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 *   **[Yapıldı]** Tamamen işlevsel, restorana özel dinamik sepet sistemi.
 *   **[Yapıldı]** Google Haritalar entegrasyonu ve dinamik Ana Sayfa tasarımı.
 *   **[Yapıldı]** Kullanıcı konumu isteme ve haritada gösterme özelliği eklendi.
+*   **[Yapıldı]** Konum izni sonrası oluşan beyaz ekran hatası düzeltildi.
 
 ---
