@@ -18,7 +18,7 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 ### 2. Harita Görünümü (Anasayfa)
 - [x] Google Haritalar entegrasyonu ile restoranları gösterme.
 - [x] Flaş İndirimler, Öne Çıkan Restoranlar ve İşletmelere yönelik reklam alanları eklendi.
-- [ ] Kullanıcının mevcut konumunu haritada gösterme.
+- [x] Kullanıcının mevcut konumunu haritada gösterme.
 - [ ] Bir iğneye tıklandığında detay kartı gösterme.
 
 ### 3. İşletme Menü Sayfası
@@ -50,7 +50,7 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 
 ### Teknolojiler
 *   **Frontend:** React (Vite ile oluşturuldu)
-*   **Backend & Altyapı:** Firebase
+*   **Backend & Altopayı:** Firebase
 *   **Versiyon Kontrolü:** Git & GitHub
 
 ### Tamamlanan Adımlar
@@ -62,5 +62,6 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 *   **[Yapıldı]** Temel kullanıcı kimlik doğrulama (Giriş, Kayıt, Çıkış) özellikleri eklendi.
 *   **[Yapıldı]** Tamamen işlevsel, restorana özel dinamik sepet sistemi.
 *   **[Yapıldı]** Google Haritalar entegrasyonu ve dinamik Ana Sayfa tasarımı.
+*   **[Yapıldı]** Kullanıcı konumu isteme ve haritada gösterme özelliği eklendi.
 
 ---
