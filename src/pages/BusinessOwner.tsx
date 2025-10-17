@@ -1,128 +1,169 @@
 
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db, functions } from '../firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
 import { useAuth } from '../contexts/AuthContext';
 import { 
     Container, 
     Typography, 
-    Paper, 
     Box, 
+    Paper, 
+    TextField, 
+    Button, 
     CircularProgress, 
+    Alert, 
     List, 
     ListItem, 
-    ListItemText, 
+    ListItemText,
     Divider,
-    Card,
-    CardContent
+    Grid
 } from '@mui/material';
 
-interface Order {
-    id: string;
-    // Add other order properties here, e.g., items, total, customerInfo
-}
-
-interface Restaurant {
+interface Waiter {
     id: string;
     name: string;
-    // Add other restaurant properties
+    email: string;
+}
+
+interface CreateWaiterResult {
+    success: boolean;
+    message: string;
+    uid?: string;
 }
 
 const BusinessOwnerDashboard: React.FC = () => {
-    const { user } = useAuth();
-    const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const { userProfile } = useAuth();
+    const [waiters, setWaiters] = useState<Waiter[]>([]);
+    const [loadingWaiters, setLoadingWaiters] = useState(true);
+
+    const [newWaiterName, setNewWaiterName] = useState('');
+    const [newWaiterUsername, setNewWaiterUsername] = useState('');
+    const [newWaiterPassword, setNewWaiterPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchBusinessData = async () => {
-            if (!user) {
-                setLoading(false);
-                return;
+        if (userProfile?.role === 'businessOwner' && userProfile.restaurantId) {
+            const waitersQuery = query(
+                collection(db, "users"), 
+                where("role", "==", "waiter"), 
+                where("restaurantId", "==", userProfile.restaurantId)
+            );
+
+            const unsubscribe = onSnapshot(waitersQuery, (querySnapshot) => {
+                const waitersData = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                } as Waiter));
+                setWaiters(waitersData);
+                setLoadingWaiters(false);
+            });
+
+            return () => unsubscribe();
+        }
+    }, [userProfile]);
+
+    const handleAddWaiter = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const createWaiter = httpsCallable< { username: string; password: string; displayName: string; }, CreateWaiterResult >(functions, 'createWaiter');
+            const result = await createWaiter({ 
+                username: newWaiterUsername, 
+                password: newWaiterPassword, 
+                displayName: newWaiterName 
+            });
+
+            const data = result.data;
+            if (data.success) {
+                setSuccess(data.message);
+                setNewWaiterName('');
+                setNewWaiterUsername('');
+                setNewWaiterPassword('');
+            } else {
+                 throw new Error("Cloud function returned failure.");
             }
-
-            try {
-                setLoading(true);
-                // Fetch restaurants owned by the current user
-                const restaurantsQuery = query(collection(db, 'restaurants'), where('ownerId', '==', user.uid));
-                const restaurantSnap = await getDocs(restaurantsQuery);
-                const ownedRestaurants = restaurantSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Restaurant));
-                setRestaurants(ownedRestaurants);
-
-                // If the owner has restaurants, fetch orders for those restaurants
-                if (ownedRestaurants.length > 0) {
-                    const restaurantIds = ownedRestaurants.map(r => r.id);
-                    // This query is simplistic. In a real scenario, you might query an 'orders' collection
-                    // where each order document has a 'restaurantId' field.
-                    // For this example, let's assume we fetch orders for the first restaurant.
-                    const ordersQuery = query(collection(db, 'orders'), where('restaurantId', '==', restaurantIds[0]));
-                    const ordersSnap = await getDocs(ordersQuery);
-                    const fetchedOrders = ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-                    setOrders(fetchedOrders);
-                }
-                
-                setError(null);
-            } catch (err) {
-                console.error("Error fetching business data:", err);
-                setError("İşletme verileri alınırken bir hata oluştu.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchBusinessData();
-    }, [user]);
-
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || "Garson oluşturulurken bir hata oluştu.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
-        <Container maxWidth="md" sx={{ mt: 4 }}>
-            <Paper elevation={3} sx={{ p: 3 }}>
+        <Container maxWidth="md">
+            <Paper sx={{ p: 4, mt: 4 }}>
                 <Typography variant="h4" gutterBottom>
-                    İşletme Sahibi Paneli
+                    İşletmeci Kontrol Paneli
                 </Typography>
-                
-                {error && <Typography color="error">{error}</Typography>}
+                <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
+                    Restoran: {userProfile?.restaurantName || 'Yükleniyor...'}
+                </Typography>
 
-                <Box sx={{ my: 4 }}>
-                    <Typography variant="h5" gutterBottom>Restoranlarım</Typography>
-                    {restaurants.length > 0 ? (
-                        <List>
-                            {restaurants.map(r => (
-                                <ListItem key={r.id}>
-                                    <ListItemText primary={r.name} />
-                                </ListItem>
-                            ))}
-                        </List>
-                    ) : (
-                        <Typography>Henüz kayıtlı bir restoranınız bulunmuyor.</Typography>
-                    )}
-                </Box>
-                
-                <Divider />
+                <Grid container spacing={4}>
+                    <Grid item xs={12} md={5}>
+                        <Typography variant="h5" gutterBottom>Yeni Garson Ekle</Typography>
+                        <Box component="form" onSubmit={handleAddWaiter}>
+                            <TextField
+                                label="Garson Adı Soyadı"
+                                value={newWaiterName}
+                                onChange={(e) => setNewWaiterName(e.target.value)}
+                                fullWidth
+                                required
+                                margin="normal"
+                            />
+                            <TextField
+                                label="Kullanıcı Adı"
+                                value={newWaiterUsername}
+                                onChange={(e) => setNewWaiterUsername(e.target.value)}
+                                fullWidth
+                                required
+                                margin="normal"
+                            />
+                            <TextField
+                                label="Şifre"
+                                type="password"
+                                value={newWaiterPassword}
+                                onChange={(e) => setNewWaiterPassword(e.target.value)}
+                                fullWidth
+                                required
+                                margin="normal"
+                            />
+                            <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={isSubmitting}>
+                                {isSubmitting ? <CircularProgress size={24} /> : 'Garson Ekle'}
+                            </Button>
+                            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+                            {success && <Alert severity="success" sx={{ mt: 2 }}>{success}</Alert>}
+                        </Box>
+                    </Grid>
 
-                <Box sx={{ my: 4 }}>
-                    <Typography variant="h5" gutterBottom>Gelen Siparişler</Typography>
-                    {orders.length > 0 ? (
-                        orders.map(order => (
-                            <Card key={order.id} sx={{ mb: 2 }}>
-                                <CardContent>
-                                    <Typography>Sipariş ID: {order.id}</Typography>
-                                    {/* Display more order details here */}
-                                </CardContent>
-                            </Card>
-                        ))
-                    ) : (
-                        <Typography>Henüz yeni siparişiniz yok.</Typography>
-                    )}
-                </Box>
+                    <Grid item xs={12} md={7}>
+                        <Typography variant="h5" gutterBottom>Mevcut Garsonlar</Typography>
+                        {loadingWaiters ? <CircularProgress /> : (
+                            <List>
+                                {waiters.length > 0 ? waiters.map((waiter, index) => (
+                                    <React.Fragment key={waiter.id}>
+                                        <ListItem>
+                                            <ListItemText 
+                                                primary={waiter.name} 
+                                                secondary={waiter.email} 
+                                            />
+                                        </ListItem>
+                                        {index < waiters.length - 1 && <Divider />}
+                                    </React.Fragment>
+                                )) : (
+                                    <Typography>Henüz garson eklenmemiş.</Typography>
+                                )}
+                            </List>
+                        )}
+                    </Grid>
+                </Grid>
             </Paper>
         </Container>
     );

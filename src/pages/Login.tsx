@@ -32,46 +32,60 @@ const Login: React.FC = () => {
     const user = userCredential.user;
     const userDocRef = doc(db, 'users', user.uid);
     const userDocSnap = await getDoc(userDocRef);
-    const userData = userDocSnap.data();
 
-    // Create user doc if it doesn't exist (for Google Sign-in)
     if (!userDocSnap.exists()) {
       await setDoc(userDocRef, {
         name: user.displayName || 'New User',
         email: user.email,
-        role: 'user', // Default role
+        role: 'user',
         createdAt: new Date(),
       });
     }
-    
-    // Redirect based on role
-    if (userData?.role === 'waiter') {
-      navigate('/waiter');
-    } else if (userData?.role === 'businessOwner') {
-      navigate('/business');
-    } else if (userData?.phone) { // Default user has phone verified
-      navigate('/');
-    } else { // Default user needs phone verification
-      navigate('/phone-verification');
-    }
+
+    const finalUserDoc = await getDoc(userDocRef);
+    const userData = finalUserDoc.data();
+
+    if (userData?.role === 'waiter') navigate('/waiter');
+    else if (userData?.role === 'businessOwner') navigate('/business');
+    else if (userData?.phone) navigate('/');
+    else navigate('/phone-verification');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    try {
-      let finalEmail = email;
-      if (mode === 'staff') {
-        // Assume staff usernames are converted to emails in a specific format
-        finalEmail = `${username.toLowerCase()}@kaciyorortak.waiter`;
+
+    if (mode === 'customer') {
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        await handleSuccessfulLogin(userCredential);
+      } catch (err) {
+        setError('E-posta veya şifre hatalı.');
       }
-      const userCredential = await signInWithEmailAndPassword(auth, finalEmail, password);
-      await handleSuccessfulLogin(userCredential);
-    } catch (err: any) {
-      setError('Kullanıcı adı veya şifre hatalı.');
+    } else { // Staff login
+      const waiterEmail = `${username.toLowerCase()}@kaciyorortak.waiter`;
+      const ownerEmail = `${username.toLowerCase()}@kaciyorortak.owner`;
+
+      try {
+        // Try logging in as a waiter first
+        const userCredential = await signInWithEmailAndPassword(auth, waiterEmail, password);
+        await handleSuccessfulLogin(userCredential);
+      } catch (waiterError: any) {
+        // If waiter login fails, try logging in as an owner
+        if (waiterError.code === 'auth/user-not-found' || waiterError.code === 'auth/invalid-credential') {
+          try {
+            const userCredential = await signInWithEmailAndPassword(auth, ownerEmail, password);
+            await handleSuccessfulLogin(userCredential);
+          } catch (ownerError) {
+            setError('Kullanıcı adı veya şifre hatalı.');
+          }
+        } else {
+          setError('Kullanıcı adı veya şifre hatalı.');
+        }
+      }
     }
   };
-
+  
   const handleGoogleLogin = async () => {
     setError(null);
     try {
@@ -85,15 +99,12 @@ const Login: React.FC = () => {
   return (
     <Container component="main" maxWidth="xs">
       <Paper elevation={6} sx={{ marginTop: 8, p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography component="h1" variant="h5">
-          Giriş Yap
-        </Typography>
+        <Typography component="h1" variant="h5">Giriş Yap</Typography>
         <ToggleButtonGroup
           color="primary"
           value={mode}
           exclusive
           onChange={handleModeChange}
-          aria-label="login mode"
           sx={{ mt: 2, mb: 2 }}
         >
           <ToggleButton value="customer">Müşteri</ToggleButton>
@@ -133,25 +144,14 @@ const Login: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, py: 1.5 }}
-          >
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, py: 1.5 }}>
             Giriş Yap
           </Button>
 
           {mode === 'customer' && (
             <>
               <Divider sx={{ my: 3 }}>veya</Divider>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<GoogleIcon />}
-                onClick={handleGoogleLogin}
-                sx={{ py: 1.5 }}
-              >
+              <Button fullWidth variant="outlined" startIcon={<GoogleIcon />} onClick={handleGoogleLogin} sx={{ py: 1.5 }}>
                 Google ile Devam Et
               </Button>
               <Grid container justifyContent="flex-end" sx={{ mt: 3 }}>

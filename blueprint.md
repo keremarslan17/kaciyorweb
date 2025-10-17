@@ -31,8 +31,12 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [ ] Sipariş onayı sonrası QR kod oluşturma.
 
 ### 4. İşletmeci Kontrol Paneli
+- [x] İşletmeciler için özel giriş ekranı.
+- [x] İşletmeciye özel kontrol paneli arayüzü.
+- [x] Güvenli bir şekilde yeni garson ekleme (Cloud Function ile).
+- [x] Mevcut garsonları listeleme.
 - [ ] Menü ve indirim yönetimi.
-- [ ] Garson tanımlama.
+- [ ] Garson silme.
 
 ### 5. Garson Paneli
 - [x] Garsonlar için özel giriş ekranı.
@@ -62,5 +66,6 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 *   **[Yapıldı]** Kullanıcı konumu isteme ve haritada gösterme.
 *   **[Yapıldı]** Flaş indirimler mesafeye göre sıralanıyor.
 *   **[Yapıldı]** Garson paneli ve rol bazlı arayüz (UI) altyapısı oluşturuldu.
+*   **[Yapıldı]** İşletmeci paneli altyapısı ve güvenli garson ekleme özelliği eklendi.
 
 ---

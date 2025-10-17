@@ -8,6 +8,8 @@ import { CircularProgress, Box } from '@mui/material';
 interface UserProfile {
   role: 'user' | 'waiter' | 'businessOwner' | 'admin';
   name: string;
+  restaurantId?: string;
+  restaurantName?: string;
 }
 
 interface AuthContextType {
@@ -70,12 +72,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     userProfile,
     loading,
-    setLoading, // Exposing setLoading to be used in other components
+    setLoading,
     auth,
     logout,
   };
 
-  if (loading && userProfile === null) { // Initial loading state
+  if (loading && userProfile === null) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
