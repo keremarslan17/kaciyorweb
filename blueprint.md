@@ -7,7 +7,7 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 
 ### 1. Kullanıcı Kimlik Doğrulama (Authentication)
 - [x] E-posta ve şifre ile kayıt olma ekranı.
-- [x] Giriş yapma ekranı.
+- [x] Farklı roller için (Müşteri, Personel) ayrı giriş ekranı.
 - [x] Oturumu kapatma işlevselliği.
 - [ ] Şifremi unuttum akışı.
 - [ ] Google ile giriş yapma seçeneği.
@@ -35,6 +35,9 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [ ] Garson tanımlama.
 
 ### 5. Garson Paneli
+- [x] Garsonlar için özel giriş ekranı.
+- [x] Garson rolüne özel, sadeleştirilmiş arayüz (Navbar).
+- [x] Sipariş alma butonu içeren temel garson paneli sayfası.
 - [ ] Aktif siparişleri görme.
 - [ ] QR kod ile sipariş onayı.
 
@@ -49,22 +52,15 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 
 ## Proje Detayları ve Mevcut Durum
 
-### Teknolojiler
-*   **Frontend:** React (Vite ile oluşturuldu)
-*   **Backend & Altopayı:** Firebase
-*   **Versiyon Kontrolü:** Git & GitHub
-
 ### Tamamlanan Adımlar
 *   **[Yapıldı]** Proje, `kaciyorortak` Firebase projesine bağlandı.
 *   **[Yapıldı]** Tüm Firebase servisleri için temel yapılandırma dosyaları oluşturuldu.
-*   **[Yapıldı]** Proje canlıya alındı.
-*   **[Yapıldı]** Proje, bir GitHub deposuna bağlandı.
 *   **[Yapıldı]** Build sistemi ve proje bağımlılıkları düzeltildi.
-*   **[Yapıldı]** Temel kullanıcı kimlik doğrulama (Giriş, Kayıt, Çıkış) özellikleri eklendi.
+*   **[Yapıldı]** Temel kullanıcı kimlik doğrulama ve oturum yönetimi.
 *   **[Yapıldı]** Tamamen işlevsel, restorana özel dinamik sepet sistemi.
 *   **[Yapıldı]** Google Haritalar entegrasyonu ve dinamik Ana Sayfa tasarımı.
-*   **[Yapıldı]** Kullanıcı konumu isteme ve haritada gösterme özelliği eklendi.
-*   **[Yapıldı]** Konum izni sonrası oluşan beyaz ekran hatası düzeltildi.
+*   **[Yapıldı]** Kullanıcı konumu isteme ve haritada gösterme.
 *   **[Yapıldı]** Flaş indirimler mesafeye göre sıralanıyor.
+*   **[Yapıldı]** Garson paneli ve rol bazlı arayüz (UI) altyapısı oluşturuldu.
 
 ---

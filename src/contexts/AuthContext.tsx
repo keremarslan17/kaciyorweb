@@ -1,16 +1,22 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAuth, onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { app } from '../firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { app, db } from '../firebase';
 import { CircularProgress, Box } from '@mui/material';
+
+interface UserProfile {
+  role: 'user' | 'waiter' | 'businessOwner' | 'admin';
+  name: string;
+}
 
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
+  setLoading: (loading: boolean) => void;
   auth: any;
   logout: () => Promise<void>;
-  setLoading?: (loading: boolean) => void;
-  currentUser?: User | null; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,41 +29,53 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const auth = getAuth(app);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoading(false);
+      if (!currentUser) {
+        setUserProfile(null);
+        setLoading(false);
+      }
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, [auth]);
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Logout failed", error);
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setUserProfile(docSnap.data() as UserProfile);
+        } else {
+          setUserProfile(null); 
+        }
+        setLoading(false);
+      });
+      return () => unsubscribeProfile();
     }
+  }, [user]);
+
+  const logout = async () => {
+    await signOut(auth);
   };
 
   const value: AuthContextType = {
     user,
+    userProfile,
     loading,
+    setLoading, // Exposing setLoading to be used in other components
     auth,
     logout,
-    setLoading,
-    currentUser: user 
   };
 
-  if (loading) {
+  if (loading && userProfile === null) { // Initial loading state
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />

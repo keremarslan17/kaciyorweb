@@ -23,6 +23,7 @@ import PostDetail from './pages/PostDetail';
 import Admin from './pages/Admin';
 import BusinessOwnerDashboard from './pages/BusinessOwner';
 import PhoneVerification from './pages/PhoneVerification';
+import WaiterDashboard from './pages/WaiterDashboard'; // Import the new page
 
 function App() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -56,9 +57,10 @@ function App() {
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/create-post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
                 
-                {/* Admin and Business Routes */}
+                {/* Role-Based Routes */}
                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                 <Route path="/business" element={<ProtectedRoute><BusinessOwnerDashboard /></ProtectedRoute>} />
+                <Route path="/waiter" element={<ProtectedRoute><WaiterDashboard /></ProtectedRoute>} /> 
               </Routes>
             </Container>
             <CartDrawer open={cartOpen} onClose={handleCartClose} />

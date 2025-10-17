@@ -16,49 +16,58 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onCartOpen }) => {
-  const { user, logout } = useAuth();
+  const { user, userProfile, logout } = useAuth();
   const { cartState } = useCart();
   const cartItemCount = cartState.items.reduce((count, item) => count + item.quantity, 0);
+
+  const renderWaiterNav = () => (
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Button color="inherit" startIcon={<ExitToAppIcon />} onClick={logout}>
+        Çıkış Yap
+      </Button>
+    </Box>
+  );
+
+  const renderUserNav = () => (
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <IconButton color="inherit" component={Link} to="/">
+        <HomeIcon />
+      </IconButton>
+      <IconButton color="inherit" component={Link} to="/profile">
+        <AccountCircleIcon />
+      </IconButton>
+      <IconButton color="inherit" onClick={onCartOpen}>
+        <Badge badgeContent={cartItemCount} color="error">
+          <ShoppingCartIcon />
+        </Badge>
+      </IconButton>
+      <Button color="inherit" startIcon={<ExitToAppIcon />} onClick={logout}>
+        Çıkış Yap
+      </Button>
+    </Box>
+  );
+
+  const renderGuestNav = () => (
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Button color="inherit" component={Link} to="/login" startIcon={<LoginIcon />}>
+        Giriş Yap
+      </Button>
+      <Button color="inherit" component={Link} to="/register" startIcon={<AppRegistrationIcon />}>
+        Kayıt Ol
+      </Button>
+    </Box>
+  );
 
   return (
     <AppBar position="static" sx={{ borderRadius: 2, margin: 'auto', mt: 2, maxWidth: '95%' }}>
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Link to={userProfile?.role === 'waiter' ? '/waiter' : '/'} style={{ textDecoration: 'none', color: 'inherit' }}>
             Kaçıyor
           </Link>
         </Typography>
         
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton color="inherit" component={Link} to="/">
-            <HomeIcon />
-          </IconButton>
-
-          {user ? (
-            <>
-              <IconButton color="inherit" component={Link} to="/profile">
-                <AccountCircleIcon />
-              </IconButton>
-              <IconButton color="inherit" onClick={onCartOpen}>
-                <Badge badgeContent={cartItemCount} color="error">
-                  <ShoppingCartIcon />
-                </Badge>
-              </IconButton>
-              <Button color="inherit" startIcon={<ExitToAppIcon />} onClick={logout}>
-                Çıkış Yap
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button color="inherit" component={Link} to="/login" startIcon={<LoginIcon />}>
-                Giriş Yap
-              </Button>
-              <Button color="inherit" component={Link} to="/register" startIcon={<AppRegistrationIcon />}>
-                Kayıt Ol
-              </Button>
-            </>
-          )}
-        </Box>
+        {user && userProfile?.role === 'waiter' ? renderWaiterNav() : (user ? renderUserNav() : renderGuestNav())}
       </Toolbar>
     </AppBar>
   );
