@@ -17,6 +17,7 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 
 ### 2. Harita Görünümü (Anasayfa)
 - [x] Google Haritalar entegrasyonu ile restoranları gösterme.
+- [x] Flaş İndirimler bölümü, en yakın restorandan başlayarak sıralanıyor.
 - [x] Flaş İndirimler, Öne Çıkan Restoranlar ve İşletmelere yönelik reklam alanları eklendi.
 - [x] Kullanıcının mevcut konumunu haritada gösterme.
 - [ ] Bir iğneye tıklandığında detay kartı gösterme.
@@ -64,5 +65,6 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 *   **[Yapıldı]** Google Haritalar entegrasyonu ve dinamik Ana Sayfa tasarımı.
 *   **[Yapıldı]** Kullanıcı konumu isteme ve haritada gösterme özelliği eklendi.
 *   **[Yapıldı]** Konum izni sonrası oluşan beyaz ekran hatası düzeltildi.
+*   **[Yapıldı]** Flaş indirimler mesafeye göre sıralanıyor.
 
 ---
