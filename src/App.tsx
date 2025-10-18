@@ -22,6 +22,9 @@ const AdminDashboard = React.lazy(() => import('./pages/Admin'));
 const BusinessOwnerDashboard = React.lazy(() => import('./pages/BusinessOwner'));
 const PhoneVerification = React.lazy(() => import('./pages/PhoneVerification'));
 const WaiterDashboard = React.lazy(() => import('./pages/WaiterDashboard'));
+// ADD: Lazy load the new UserAgreement page
+const UserAgreement = React.lazy(() => import('./pages/UserAgreement'));
+
 
 // Fallback component to show while pages are loading
 const PageLoader = () => (
@@ -41,7 +44,6 @@ function App() {
           <CartProvider>
             <Navbar onCartOpen={() => setCartOpen(true)} />
             <Container sx={{ mt: 4, mb: 4 }}>
-              {/* Use Suspense to show a loader while pages are being loaded */}
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* Public Routes */}
@@ -50,6 +52,8 @@ function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/restaurant/:restaurantId" element={<RestaurantMenu />} />
                   <Route path="/phone-verification" element={<PhoneVerification />} />
+                  {/* ADD: Route for the UserAgreement page */}
+                  <Route path="/user-agreement" element={<UserAgreement />} />
 
                   {/* Protected Routes */}
                   <Route 
