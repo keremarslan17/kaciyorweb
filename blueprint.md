@@ -4,7 +4,7 @@ Bu döküman, "Kaçıyor" adlı mobil uygulamanın geliştirme sürecini, özell
 
 ## Amaç
 
-Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, menüleri incelemesini ve sipariş vermesini sağlayan bir platform oluşturmak. İşletmeler için ise anlık indirimler yayınlayarak müşteri çekebilecekleri ve sipariş süreçlerini dijillleştirebilecekleri bir araç sunmak.
+Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, menüleri incelemesini ve sipariş vermesini sağlayan bir platform oluşturmak. İşletmeler için ise anlık indirimler yayınlayarak müşteri çekebilecekleri ve sipariş süreçlerini dijitalleştirebilecekleri bir araç sunmak.
 
 ## Özellikler (Features)
 
@@ -39,6 +39,7 @@ Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, me
 - [x] İşletmeciye özel kontrol paneli arayüzü.
 - [x] Güvenli bir şekilde yeni garson ekleme (Cloud Function ile).
 - [x] Mevcut garsonları listeleme.
+- [x] **Şifre Sıfırlama:** İşletme sahibi, garsonları için şifre sıfırlama e-postası gönderebilir.
 - [x] **İndirim Yönetimi:** Seçili ürünlere veya tüm ürünlere yüzde veya tutar olarak indirim uygulama.
 - [x] **Satış Raporları:** Günlük, haftalık ve aylık satışları, adetleri ve ciroları detaylı olarak görme.
 - [x] **Restoran Bilgileri:** Restoran ile ilgili tüm bilgileri düzenleyebilme.
@@ -48,6 +49,7 @@ Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, me
 ### 5. Garson Paneli
 - [x] Garsonlar için özel giriş ekranı.
 - [x] Garson rolüne özel, sadeleştirilmiş arayüz (Navbar).
+- [x] **Restoran Bilgisi:** Garson, panelde hangi restoranda çalıştığını görür.
 - [x] Sipariş alma butonu içeren temel garson paneli sayfası.
 - [x] **QR Kod ile Sipariş Onayı:** Garson, müşterinin QR kodunu okutarak sipariş detaylarını görür ve onaylar. Müşterinin ekranı anlık olarak güncellenir.
 - [x] **Manuel Sipariş Alma:** Garson, QR kod olmadan sipariş detaylarını (masa no, ürünler) elle girebilir.

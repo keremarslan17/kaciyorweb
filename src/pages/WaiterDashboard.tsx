@@ -1,11 +1,14 @@
 
-import React, { useState } from 'react';
-import { Container, Typography, Box, Paper, Button, Modal, Stack } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, Box, Paper, Button, Modal, Stack, Chip } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import QrScanner from '../components/QrScanner'; 
-import ManualOrderForm from '../components/ManualOrderForm'; // Yeni oluşturulacak bileşen
+import ManualOrderForm from '../components/ManualOrderForm';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -24,8 +27,29 @@ const style = {
 
 const WaiterDashboard: React.FC = () => {
     const { userProfile } = useAuth();
+    const [restaurantName, setRestaurantName] = useState('');
     const [isScannerOpen, setScannerOpen] = useState(false);
     const [isManualOrderOpen, setManualOrderOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchRestaurantName = async () => {
+            if (userProfile?.restaurantId) {
+                try {
+                    const restaurantRef = doc(db, 'restaurants', userProfile.restaurantId);
+                    const restaurantSnap = await getDoc(restaurantRef);
+                    if (restaurantSnap.exists()) {
+                        setRestaurantName(restaurantSnap.data().name);
+                    } else {
+                        console.log("Restoran bulunamadı!");
+                    }
+                } catch (error) {
+                    console.error("Restoran adı alınırken hata:", error);
+                }
+            }
+        };
+
+        fetchRestaurantName();
+    }, [userProfile]);
 
     const handleOpenScanner = () => setScannerOpen(true);
     const handleCloseScanner = () => setScannerOpen(false);
@@ -39,9 +63,17 @@ const WaiterDashboard: React.FC = () => {
                 <Typography variant="h4" gutterBottom>
                     Garson Paneli
                 </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
+                <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
                     Hoş geldiniz, {userProfile?.name || 'Kullanıcı'}!
                 </Typography>
+                {restaurantName && (
+                    <Chip 
+                        icon={<StorefrontIcon />} 
+                        label={restaurantName}
+                        color="info"
+                        sx={{ mb: 4, fontSize: '1rem' }}
+                    />
+                )}
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
                     <Button 

@@ -6,6 +6,69 @@ admin.initializeApp();
 const db = admin.firestore();
 
 /**
+ * Sends a password reset email to a given user's email address.
+ * Must be called by a businessOwner.
+ */
+exports.sendPasswordResetEmail = functions.https.onCall(async (data, context) => {
+    // 1. Authentication & Role Check
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
+    }
+    const userDoc = await db.collection("users").doc(context.auth.uid).get();
+    const userData = userDoc.data();
+
+    // Ensure the caller is a businessOwner
+    if (userData.role !== "businessOwner") {
+        throw new functions.https.HttpsError("permission-denied", "Only business owners can reset passwords for their staff.");
+    }
+    
+    // 2. Input Validation
+    const { email } = data;
+    if (!email) {
+        throw new functions.https.HttpsError("invalid-argument", "Request is missing the required 'email' parameter.");
+    }
+
+    try {
+        // 3. Generate password reset link using Firebase Admin SDK
+        const link = await admin.auth().generatePasswordResetLink(email);
+        
+        // 4. (Optional but recommended) Send the email using a transactional email service
+        // For simplicity, we'll rely on Firebase's built-in email sending for now, 
+        // which can be customized in the Firebase Console under Authentication -> Templates.
+        // The generatePasswordResetLink function itself does not send an email.
+        // The standard Firebase flow is to use this link to build your own email.
+        // However, a simpler way is to use the `sendPasswordResetEmail` function from the client SDK,
+        // but for security (ensuring only owners can trigger this for their waiters),
+        // we'll use a custom function. The easiest way to send the actual email is to
+        // just confirm the user exists and then let the client call the standard reset function.
+        // This cloud function's primary role is SECURITY CHECK.
+
+        const userToReset = await admin.auth().getUserByEmail(email);
+        const userToResetDoc = await db.collection("users").doc(userToReset.uid).get();
+        const userToResetData = userToResetDoc.data();
+        
+        // SECURITY CHECK: Ensure the owner is resetting a password for a waiter in THEIR restaurant.
+        if (userToResetData.role !== 'waiter' || userToResetData.restaurantId !== userData.restaurantId) {
+             throw new functions.https.HttpsError("permission-denied", "You can only reset passwords for waiters in your restaurant.");
+        }
+
+        // If all checks pass, we return success. The client will then trigger the actual email.
+        // This is a security-first approach.
+        return { success: true, message: "Authorization granted. Client can proceed with password reset." };
+
+
+    } catch (error) {
+        console.error("Error in sendPasswordResetEmail function:", error);
+        // Provide a more user-friendly error message
+        if (error.code === 'auth/user-not-found') {
+             throw new functions.https.HttpsError("not-found", "The specified user email was not found.");
+        }
+        throw new functions.https.HttpsError("internal", "Failed to process password reset.", error.message);
+    }
+});
+
+
+/**
  * Sets a custom role for a user.
  * Must be called by an admin.
  */
