@@ -19,12 +19,25 @@ const Navbar: React.FC<{ onCartOpen: () => void }> = ({ onCartOpen }) => {
         navigate('/login');
     };
 
+    const getHomePath = () => {
+        if (!userProfile) return "/"; // Not logged in, go to public home
+        switch(userProfile.role) {
+            case 'admin':
+                return '/admin';
+            case 'businessOwner':
+                return '/business';
+            case 'waiter':
+                return '/waiter';
+            default: // customer or undefined role
+                return '/';
+        }
+    };
+
     const cartItemCount = cartState.items.reduce((acc, item) => acc + item.quantity, 0);
 
     const isStaff = userProfile && (userProfile.role === 'admin' || userProfile.role === 'businessOwner' || userProfile.role === 'waiter');
 
     return (
-        // REVERTED: Applying styles for shape AND color from the desired version.
         <AppBar 
             position="static" 
             sx={{ 
@@ -32,11 +45,11 @@ const Navbar: React.FC<{ onCartOpen: () => void }> = ({ onCartOpen }) => {
                 margin: 'auto', 
                 mt: 2, 
                 maxWidth: '95%',
-                backgroundColor: '#468e8b' // The specific teal color from the desired version
+                backgroundColor: '#468e8b'
             }}
         >
             <Toolbar>
-                <Typography variant="h6" component={RouterLink} to="/" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
+                <Typography variant="h6" component={RouterLink} to={getHomePath()} sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
                     Kaçıyor
                 </Typography>
                 {user ? (

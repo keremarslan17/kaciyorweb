@@ -12,7 +12,7 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import CartDrawer from './components/CartDrawer';
 
-// LAZY LOADING: Dynamically import pages for code-splitting
+// LAZY LOADING
 const Home = React.lazy(() => import('./pages/Home'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
@@ -22,11 +22,8 @@ const AdminDashboard = React.lazy(() => import('./pages/Admin'));
 const BusinessOwnerDashboard = React.lazy(() => import('./pages/BusinessOwner'));
 const PhoneVerification = React.lazy(() => import('./pages/PhoneVerification'));
 const WaiterDashboard = React.lazy(() => import('./pages/WaiterDashboard'));
-// ADD: Lazy load the new UserAgreement page
 const UserAgreement = React.lazy(() => import('./pages/UserAgreement'));
 
-
-// Fallback component to show while pages are loading
 const PageLoader = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
     <CircularProgress />
@@ -47,15 +44,17 @@ function App() {
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/restaurant/:restaurantId" element={<RestaurantMenu />} />
                   <Route path="/phone-verification" element={<PhoneVerification />} />
-                  {/* ADD: Route for the UserAgreement page */}
                   <Route path="/user-agreement" element={<UserAgreement />} />
 
                   {/* Protected Routes */}
+                  <Route 
+                    path="/" 
+                    element={<ProtectedRoute allowedRoles={['customer']}><Home /></ProtectedRoute>} 
+                  />
                   <Route 
                     path="/profile" 
                     element={<ProtectedRoute><Profile /></ProtectedRoute>} 

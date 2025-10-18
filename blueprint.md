@@ -55,6 +55,9 @@ Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, me
 - [x] **Manuel Sipariş Alma:** Garson, QR kod olmadan sipariş detaylarını (masa no, ürünler) elle girebilir.
 - [ ] Aktif siparişleri görme.
 
-### 6. Kazanç Modeli
+### 6. Güvenlik ve Erişim Kontrolü
+- [x] **Rol Bazlı Yönlendirme:** Personel rollerinin (Admin, İşletmeci, Garson) müşteri anasayfasına erişimi engellendi ve kendi panellerine yönlendirilmeleri sağlandı.
+
+### 7. Kazanç Modeli
 - [ ] Siparişlerden komisyon hesaplama.
 - [ ] İşletmeler için reklam modeli.
