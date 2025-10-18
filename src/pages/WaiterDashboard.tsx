@@ -1,16 +1,29 @@
 
-import React from 'react';
-import { Container, Typography, Box, Paper, Button } from '@mui/material';
+import React, { useState } from 'react';
+import { Container, Typography, Box, Paper, Button, Modal } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import QrScanner from '../components/QrScanner'; // Oluşturduğumuz bileşeni import ediyoruz
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '90%',
+  maxWidth: '600px',
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
 
 const WaiterDashboard: React.FC = () => {
     const { userProfile } = useAuth();
+    const [isScannerOpen, setScannerOpen] = useState(false);
 
-    const handleNewOrder = () => {
-        // This will later trigger the QR scanner or a new order form
-        alert('Yeni sipariş alma işlemi başlatılıyor...');
-    };
+    const handleOpenScanner = () => setScannerOpen(true);
+    const handleCloseScanner = () => setScannerOpen(false);
 
     return (
         <Container maxWidth="lg">
@@ -27,10 +40,10 @@ const WaiterDashboard: React.FC = () => {
                         variant="contained" 
                         size="large" 
                         startIcon={<AddCircleOutlineIcon />}
-                        onClick={handleNewOrder}
+                        onClick={handleOpenScanner} // QR tarayıcıyı açacak fonksiyon
                         sx={{ py: 2, px: 4, fontSize: '1.2rem' }}
                     >
-                        Sipariş Al
+                        QR Kod ile Sipariş Al
                     </Button>
                 </Box>
                 
@@ -42,6 +55,18 @@ const WaiterDashboard: React.FC = () => {
                     </Typography>
                 </Box>
             </Paper>
+
+            <Modal
+                open={isScannerOpen}
+                onClose={handleCloseScanner}
+                aria-labelledby="qr-scanner-modal-title"
+                aria-describedby="qr-scanner-modal-description"
+            >
+                <Box sx={style}>
+                    <QrScanner onClose={handleCloseScanner} />
+                    <Button onClick={handleCloseScanner} sx={{ mt: 2 }} fullWidth>Kapat</Button>
+                </Box>
+            </Modal>
         </Container>
     );
 };

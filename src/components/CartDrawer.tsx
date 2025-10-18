@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, Paper, CircularProgress, Alert, Divider, Chip, TextField, Modal } from '@mui/material';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +9,10 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { QRCodeCanvas } from 'qrcode.react';
+import { collection, addDoc, onSnapshot, doc, DocumentData } from 'firebase/firestore';
+import { db } from '../firebase';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 
 interface CartDrawerProps {
   open: boolean;
@@ -16,17 +20,17 @@ interface CartDrawerProps {
 }
 
 const style = {
-  position: 'absolute' as 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-  textAlign: 'center',
-};
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+    textAlign: 'center',
+  };
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
   const { cartState, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -37,6 +41,30 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
   const [tableNumber, setTableNumber] = useState('');
   const [qrCodeValue, setQrCodeValue] = useState('');
   const [isQrModalOpen, setQrModalOpen] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [orderStatus, setOrderStatus] = useState('pending');
+
+  // Listen for order status changes
+  useEffect(() => {
+    if (!pendingOrderId) return;
+
+    const unsub = onSnapshot(doc(db, "pendingOrders", pendingOrderId), (doc) => {
+        if (doc.exists()) {
+            const data = doc.data() as DocumentData;
+            setOrderStatus(data.status);
+            if (data.status === 'confirmed') {
+                // Keep the modal open for a few seconds to show confirmation
+                setTimeout(() => {
+                    handleCloseModal();
+                }, 3000);
+            }
+        }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsub();
+  }, [pendingOrderId]);
+
 
   const handleCheckout = async () => {
     if (!user) {
@@ -55,25 +83,35 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
 
     setLoading(true);
     setError('');
+    
     try {
-      const orderDetails = {
-        restaurantId: cartState.restaurantId,
-        restaurantName: cartState.restaurantName,
-        items: cartState.items,
-        totalPrice: getTotalPrice(),
-        tableNumber: tableNumber.trim(),
-        orderTime: new Date().toISOString(),
-        status: 'pending',
-        userId: user.uid,
-      };
+        // 1. Create a temporary document in Firestore
+        const pendingOrderRef = await addDoc(collection(db, "pendingOrders"), {
+            restaurantId: cartState.restaurantId,
+            restaurantName: cartState.restaurantName,
+            items: cartState.items,
+            totalPrice: getTotalPrice(),
+            tableNumber: tableNumber.trim(),
+            orderTime: new Date().toISOString(),
+            status: 'pending', // Initial status
+            userId: user.uid,
+        });
 
-      setQrCodeValue(JSON.stringify(orderDetails));
-      setQrModalOpen(true);
-      // The actual checkout logic will be moved to the waiter's confirmation step.
-      // For now, we just generate the QR code.
-      
+        const orderDetailsForQR = {
+            pendingOrderId: pendingOrderRef.id,
+            restaurantName: cartState.restaurantName,
+            items: cartState.items,
+            totalPrice: getTotalPrice(),
+            tableNumber: tableNumber.trim(),
+        };
+        
+        setPendingOrderId(pendingOrderRef.id);
+        setQrCodeValue(JSON.stringify(orderDetailsForQR));
+        setQrModalOpen(true);
+        setOrderStatus('pending');
+
     } catch (err) {
-      setError('QR kod oluşturulurken bir hata oluştu.');
+      setError('Sipariş oluşturulurken bir hata oluştu.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -83,6 +121,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
   const handleCloseModal = () => {
     setQrModalOpen(false);
     setQrCodeValue('');
+    setPendingOrderId(null);
     clearCart();
     onClose();
   };
@@ -91,10 +130,46 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
     return cartState.items.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
   };
 
+  const renderModalContent = () => {
+    switch (orderStatus) {
+        case 'confirmed':
+            return (
+                <>
+                    <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
+                    <Typography variant="h6" component="h2">Siparişiniz Onaylandı!</Typography>
+                    <Typography sx={{ mt: 2 }}>
+                        Siparişiniz hazırlanıyor. Afiyet olsun!
+                    </Typography>
+                </>
+            );
+        case 'rejected':
+            return (
+                <>
+                    <Alert severity="error">Siparişiniz reddedildi. Lütfen garsonla iletişime geçin.</Alert>
+                    <Button onClick={handleCloseModal} sx={{ mt: 3 }} variant="contained">Kapat</Button>
+                </>
+            );
+        default: // pending
+            return (
+                <>
+                    <HourglassEmptyIcon color="info" sx={{ fontSize: 60, mb: 2 }} />
+                    <Typography variant="h6" component="h2">Garson Onayı Bekleniyor...</Typography>
+                    <Typography sx={{ mt: 2, mb: 3 }}>
+                        Lütfen bu QR kodu garsona okutarak siparişinizi onaylatın.
+                    </Typography>
+                    {qrCodeValue && <QRCodeCanvas value={qrCodeValue} size={256} />}
+                    <Button onClick={handleCloseModal} sx={{ mt: 3 }} variant="contained">İptal Et</Button>
+                </>
+            );
+    }
+  };
+
+
   return (
     <>
       <Drawer anchor="right" open={open} onClose={onClose}>
         <Paper sx={{ width: 320, padding: 2, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+          {/* ... (rest of the drawer content is the same) ... */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexShrink: 0 }}>
             <Typography variant="h6">Sepetim</Typography>
             <IconButton onClick={onClose}>
@@ -169,19 +244,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
       </Drawer>
       <Modal
         open={isQrModalOpen}
-        onClose={handleCloseModal}
+        onClose={orderStatus === 'pending' ? handleCloseModal : undefined} // Allow closing only if pending
         aria-labelledby="order-qr-code-modal-title"
         aria-describedby="order-qr-code-modal-description"
       >
         <Box sx={style}>
-          <Typography id="order-qr-code-modal-title" variant="h6" component="h2">
-            Siparişiniz Alındı!
-          </Typography>
-          <Typography id="order-qr-code-modal-description" sx={{ mt: 2, mb: 3 }}>
-            Lütfen bu QR kodu garsona okutarak siparişinizi onaylatın.
-          </Typography>
-          {qrCodeValue && <QRCodeCanvas value={qrCodeValue} size={256} />}
-          <Button onClick={handleCloseModal} sx={{ mt: 3 }} variant="contained">Kapat</Button>
+          {renderModalContent()}
         </Box>
       </Modal>
     </>

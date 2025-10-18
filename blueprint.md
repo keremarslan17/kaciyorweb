@@ -1,7 +1,10 @@
-# Proje: Kaçıyor React Uygulaması
+## Proje: "Kaçıyor" - Restoran İndirim ve Sipariş Platformu
 
-## Genel Hedef
-Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmesini, uygulama sayesinde hangi işletmede ne kadar indirimi olduğunu, ve işletmelere gitmeden indirimli menülerini görmesini sağlayan bir mobil uygulama. kaciyor.com adında bir websitesi de var bu web app de aynı işlevleri kullanıyor ve bu ikisi tamamen aynı server ve backendi kullanmalı, birinde yapılan değişiklik diğerinde de anında gözükmeli. Bu uygulama hep IOS hem Android de yayınlanacak. Web versyonu da react kullanılarak kodlanacak.
+Bu döküman, "Kaçıyor" adlı mobil uygulamanın geliştirme sürecini, özelliklerini ve gelecek planlarını özetlemektedir.
+
+## Amaç
+
+Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, menüleri incelemesini ve sipariş vermesini sağlayan bir platform oluşturmak. İşletmeler için ise anlık indirimler yayınlayarak müşteri çekebilecekleri ve sipariş süreçlerini dijitalleştirebilecekleri bir araç sunmak.
 
 ## Özellikler (Features)
 
@@ -28,8 +31,8 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [x] Menüden ürünleri sepete ekleme, sepetten çıkarma ve sepeti düzenleme.
 - [x] Sepeti onayla butonu ile sipariş oluşturma.
 - [x] Sepet artık sadece tek bir restorana özel çalışıyor.
-- [ ] Masa numarası girme.
-- [ ] Sipariş onayı sonrası QR kod oluşturma.
+- [x] **Masa Numarası:** Müşteri, siparişi onaylarken masa numarasını girer.
+- [x] **Sipariş Onayı (QR Kod):** Müşteri siparişi oluşturunca, garsonun okutması için bir QR kod üretilir.
 
 ### 4. İşletmeci Kontrol Paneli
 - [x] İşletmeciler için özel giriş ekranı.
@@ -46,8 +49,8 @@ Kullanıcıların konum tabanlı olarak yakındaki restorant ve kafeleri görmes
 - [x] Garsonlar için özel giriş ekranı.
 - [x] Garson rolüne özel, sadeleştirilmiş arayüz (Navbar).
 - [x] Sipariş alma butonu içeren temel garson paneli sayfası.
+- [x] **QR Kod ile Sipariş Onayı:** Garson, müşterinin QR kodunu okutarak sipariş detaylarını görür ve onaylar. Müşterinin ekranı anlık olarak güncellenir.
 - [ ] Aktif siparişleri görme.
-- [ ] QR kod ile sipariş onayı.
 
 ### 6. Kazanç Modeli
 - [ ] Siparişlerden komisyon hesaplama.
