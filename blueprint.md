@@ -4,7 +4,7 @@ Bu döküman, "Kaçıyor" adlı mobil uygulamanın geliştirme sürecini, özell
 
 ## Amaç
 
-Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, menüleri incelemesini ve sipariş vermesini sağlayan bir platform oluşturmak. İşletmeler için ise anlık indirimler yayınlayarak müşteri çekebilecekleri ve sipariş süreçlerini dijitalleştirebilecekleri bir araç sunmak.
+Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, menüleri incelemesini ve sipariş vermesini sağlayan bir platform oluşturmak. İşletmeler için ise anlık indirimler yayınlayarak müşteri çekebilecekleri ve sipariş süreçlerini dijillleştirebilecekleri bir araç sunmak.
 
 ## Özellikler (Features)
 
@@ -50,6 +50,7 @@ Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, me
 - [x] Garson rolüne özel, sadeleştirilmiş arayüz (Navbar).
 - [x] Sipariş alma butonu içeren temel garson paneli sayfası.
 - [x] **QR Kod ile Sipariş Onayı:** Garson, müşterinin QR kodunu okutarak sipariş detaylarını görür ve onaylar. Müşterinin ekranı anlık olarak güncellenir.
+- [x] **Manuel Sipariş Alma:** Garson, QR kod olmadan sipariş detaylarını (masa no, ürünler) elle girebilir.
 - [ ] Aktif siparişleri görme.
 
 ### 6. Kazanç Modeli

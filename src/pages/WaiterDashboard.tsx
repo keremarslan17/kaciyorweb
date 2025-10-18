@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
-import { Container, Typography, Box, Paper, Button, Modal } from '@mui/material';
+import { Container, Typography, Box, Paper, Button, Modal, Stack } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import QrScanner from '../components/QrScanner'; // Oluşturduğumuz bileşeni import ediyoruz
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import QrScanner from '../components/QrScanner'; 
+import ManualOrderForm from '../components/ManualOrderForm'; // Yeni oluşturulacak bileşen
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -16,14 +18,20 @@ const style = {
   border: '2px solid #000',
   boxShadow: 24,
   p: 4,
+  maxHeight: '90vh',
+  overflowY: 'auto'
 };
 
 const WaiterDashboard: React.FC = () => {
     const { userProfile } = useAuth();
     const [isScannerOpen, setScannerOpen] = useState(false);
+    const [isManualOrderOpen, setManualOrderOpen] = useState(false);
 
     const handleOpenScanner = () => setScannerOpen(true);
     const handleCloseScanner = () => setScannerOpen(false);
+
+    const handleOpenManualOrder = () => setManualOrderOpen(true);
+    const handleCloseManualOrder = () => setManualOrderOpen(false);
 
     return (
         <Container maxWidth="lg">
@@ -35,17 +43,26 @@ const WaiterDashboard: React.FC = () => {
                     Hoş geldiniz, {userProfile?.name || 'Kullanıcı'}!
                 </Typography>
 
-                <Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
                     <Button 
                         variant="contained" 
                         size="large" 
-                        startIcon={<AddCircleOutlineIcon />}
-                        onClick={handleOpenScanner} // QR tarayıcıyı açacak fonksiyon
+                        startIcon={<QrCodeScannerIcon />}
+                        onClick={handleOpenScanner}
                         sx={{ py: 2, px: 4, fontSize: '1.2rem' }}
                     >
                         QR Kod ile Sipariş Al
                     </Button>
-                </Box>
+                    <Button 
+                        variant="outlined" 
+                        size="large" 
+                        startIcon={<EditNoteIcon />}
+                        onClick={handleOpenManualOrder}
+                        sx={{ py: 2, px: 4, fontSize: '1.2rem' }}
+                    >
+                        Manuel Sipariş Al
+                    </Button>
+                </Stack>
                 
                 <Box mt={5}>
                     <Typography variant="h5" gutterBottom>Aktif Siparişler</Typography>
@@ -56,15 +73,18 @@ const WaiterDashboard: React.FC = () => {
                 </Box>
             </Paper>
 
-            <Modal
-                open={isScannerOpen}
-                onClose={handleCloseScanner}
-                aria-labelledby="qr-scanner-modal-title"
-                aria-describedby="qr-scanner-modal-description"
-            >
+            {/* QR Scanner Modal */}
+            <Modal open={isScannerOpen} onClose={handleCloseScanner}>
                 <Box sx={style}>
                     <QrScanner onClose={handleCloseScanner} />
                     <Button onClick={handleCloseScanner} sx={{ mt: 2 }} fullWidth>Kapat</Button>
+                </Box>
+            </Modal>
+
+            {/* Manual Order Modal */}
+            <Modal open={isManualOrderOpen} onClose={handleCloseManualOrder}>
+                <Box sx={style}>
+                    <ManualOrderForm onClose={handleCloseManualOrder} />
                 </Box>
             </Modal>
         </Container>
