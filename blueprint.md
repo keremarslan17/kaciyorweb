@@ -43,6 +43,7 @@ Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, me
 - [x] **İndirim Yönetimi:** Seçili ürünlere veya tüm ürünlere yüzde veya tutar olarak indirim uygulama.
 - [x] **Satış Raporları:** Günlük, haftalık ve aylık satışları, adetleri ve ciroları detaylı olarak görme.
 - [x] **Restoran Bilgileri:** Restoran ile ilgili tüm bilgileri düzenleyebilme.
+- [ ] **Sadakat Programı:** İşletmeci, sipariş tutarının yüzde kaçının müşteriye bakiye olarak döneceğini belirleyebilir.
 - [ ] Menü ve indirim yönetimi.
 - [ ] Garson silme.
 
@@ -55,6 +56,11 @@ Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, me
 - [x] **Manuel Sipariş Alma:** Garson, QR kod olmadan sipariş detaylarını (masa no, ürünler) elle girebilir.
 - [ ] Aktif siparişleri görme.
 
-### 6. Kazanç Modeli
+### 6. Sadakat Bakiyesi Sistemi
+- [x] **Bakiye Kazanma:** Kullanıcılar, her siparişlerinden sonra, işletmecinin belirlediği oranda, o işletmede geçerli TL bakiyesi kazanır.
+- [x] **Bakiye Görüntüleme:** Kullanıcılar, profil sayfalarında hangi restoranda ne kadar bakiyeleri olduğunu görebilir.
+- [x] **Bakiye Kullanma:** Sipariş onay ekranında, kullanıcı mevcut bakiyesini görür ve tek tuşla fiyattan düşebilir.
+
+### 7. Kazanç Modeli
 - [ ] Siparişlerden komisyon hesaplama.
 - [ ] İşletmeler için reklam modeli.

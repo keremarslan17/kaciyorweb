@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import {
   Container,
   TextField,
@@ -12,9 +12,14 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Avatar
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Grid
 } from '@mui/material';
-import { AccountCircle } from '@mui/icons-material';
+import { AccountCircle, AccountBalanceWallet } from '@mui/icons-material';
 
 interface UserProfile {
   name: string;
@@ -23,23 +28,29 @@ interface UserProfile {
   phone?: string;
 }
 
-const ProfilePage: React.FC = () => {
-  const { user, loading: authLoading } = useAuth(); // Changed currentUser to user
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+interface UserBalance {
+  restaurantName: string;
+  balance: number;
+}
 
-  useEffect(() => {
-    const fetchProfile = async () => {
+const ProfilePage: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
+  const [profile, setProfile] = React.useState<UserProfile | null>(null);
+  const [balances, setBalances] = React.useState<UserBalance[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchProfileAndBalances = async () => {
       if (user) {
         try {
+          // Fetch user profile
           const docRef = doc(db, 'users', user.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             setProfile(docSnap.data() as UserProfile);
           } else {
-            // If no profile exists, create one with default info
             const defaultProfile: UserProfile = {
               name: user.displayName || '',
               email: user.email || '',
@@ -47,17 +58,24 @@ const ProfilePage: React.FC = () => {
             await setDoc(docRef, defaultProfile);
             setProfile(defaultProfile);
           }
+
+          // Fetch user balances
+          const balanceQuery = query(collection(db, 'userBalances'), where('userId', '==', user.uid));
+          const balanceSnapshot = await getDocs(balanceQuery);
+          const userBalances = balanceSnapshot.docs.map(d => d.data() as UserBalance);
+          setBalances(userBalances);
+
           setError(null);
         } catch (err) {
-          console.error("Error fetching user profile:", err);
-          setError("Profil bilgileri alınamadı.");
+          console.error("Error fetching data:", err);
+          setError("Profil ve bakiye bilgileri alınamadı.");
         }
       }
       setLoading(false);
     };
 
     if (!authLoading) {
-      fetchProfile();
+      fetchProfileAndBalances();
     }
   }, [user, authLoading]);
 
@@ -87,86 +105,61 @@ const ProfilePage: React.FC = () => {
   };
 
   if (authLoading || loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
   }
 
   if (!user || !profile) {
-    return (
-      <Container maxWidth="sm">
-        <Typography variant="h6" align="center" sx={{ mt: 5 }}>
-          Lütfen profilinizi görüntülemek için giriş yapın.
-        </Typography>
-      </Container>
-    );
+    return <Typography sx={{ textAlign: 'center', mt: 5 }}>Lütfen profilinizi görüntülemek için giriş yapın.</Typography>;
   }
 
   return (
-    <Container component="main" maxWidth="sm" sx={{ mt: 4 }}>
-      <Paper elevation={4} sx={{ p: 4, borderRadius: '16px' }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main', width: 64, height: 64 }}>
-            <AccountCircle sx={{ fontSize: 40 }}/>
-          </Avatar>
-          <Typography component="h1" variant="h5">
-            Profilim
-          </Typography>
-          {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
-          {success && <Alert severity="success" sx={{ width: '100%', mt: 2 }}>{success}</Alert>}
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="name"
-              label="Ad Soyad"
-              name="name"
-              value={profile.name}
-              onChange={handleChange}
-            />
-            <TextField
-              margin="normal"
-              fullWidth
-              id="email"
-              label="E-posta Adresi"
-              name="email"
-              value={profile.email}
-              disabled // Email is usually not changeable
-            />
-            <TextField
-              margin="normal"
-              fullWidth
-              id="phone"
-              label="Telefon Numarası"
-              name="phone"
-              value={profile.phone || ''}
-              onChange={handleChange}
-            />
-             <TextField
-              margin="normal"
-              fullWidth
-              id="address"
-              label="Adres"
-              name="address"
-              value={profile.address || ''}
-              onChange={handleChange}
-              multiline
-              rows={3}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: '8px' }}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Değişiklikleri Kaydet'}
-            </Button>
-          </Box>
-        </Box>
-      </Paper>
+    <Container component="main" maxWidth="md" sx={{ mt: 4 }}>
+      <Grid container spacing={4}>
+        {/* Profile Edit Section */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={4} sx={{ p: 4, borderRadius: '16px' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}><AccountCircle /></Avatar>
+              <Typography component="h1" variant="h5">Profilim</Typography>
+              {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
+              {success && <Alert severity="success" sx={{ width: '100%', mt: 2 }}>{success}</Alert>}
+              <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+                <TextField margin="normal" fullWidth id="name" label="Ad Soyad" name="name" value={profile.name} onChange={handleChange} />
+                <TextField margin="normal" fullWidth id="email" label="E-posta" name="email" value={profile.email} disabled />
+                <TextField margin="normal" fullWidth id="phone" label="Telefon" name="phone" value={profile.phone || ''} onChange={handleChange} />
+                <TextField margin="normal" fullWidth id="address" label="Adres" name="address" value={profile.address || ''} onChange={handleChange} multiline rows={3} />
+                <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={loading}>
+                  {loading ? <CircularProgress size={24} /> : 'Değişiklikleri Kaydet'}
+                </Button>
+              </Box>
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Balances Section */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={4} sx={{ p: 4, borderRadius: '16px', height: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}><AccountBalanceWallet /></Avatar>
+              <Typography component="h1" variant="h5">Restoran Bakiyelerim</Typography>
+            </Box>
+            {balances.length > 0 ? (
+              <List>
+                {balances.map((b, index) => (
+                  <React.Fragment key={index}>
+                    <ListItem>
+                      <ListItemText primary={b.restaurantName} secondary={`${b.balance.toFixed(2)} TL`} />
+                    </ListItem>
+                    {index < balances.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            ) : (
+              <Typography>Henüz hiçbir restoranda bakiyeniz bulunmuyor.</Typography>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
     </Container>
   );
 };

@@ -6,99 +6,80 @@ admin.initializeApp();
 const db = admin.firestore();
 
 /**
+ * Updates user balances after a new order is created.
+ * This function is triggered when a new document is written to the /orders collection.
+ */
+exports.updateUserBalanceOnOrder = functions.firestore
+    .document('orders/{orderId}')
+    .onCreate(async (snap, context) => {
+        const orderData = snap.data();
+        const { userId, restaurantId, totalPrice, balanceUsed = 0 } = orderData;
+
+        if (!userId || !restaurantId || totalPrice == null) {
+            console.error("Order is missing critical data (userId, restaurantId, totalPrice):", orderData);
+            return null;
+        }
+
+        const restaurantRef = db.collection('restaurants').doc(restaurantId);
+        const userBalanceRef = db.collection('userBalances').doc(`${userId}_${restaurantId}`);
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                // 1. Get restaurant's loyalty percentage
+                const restaurantDoc = await transaction.get(restaurantRef);
+                if (!restaurantDoc.exists) {
+                    throw new Error(`Restaurant with ID ${restaurantId} not found.`);
+                }
+                const loyaltyPercentage = restaurantDoc.data().loyaltyPercentage || 0;
+
+                // 2. Get user's current balance
+                const userBalanceDoc = await transaction.get(userBalanceRef);
+                let currentBalance = 0;
+                if (userBalanceDoc.exists) {
+                    currentBalance = userBalanceDoc.data().balance;
+                }
+
+                // 3. Calculate new balance
+                const balanceEarned = totalPrice * (loyaltyPercentage / 100);
+                // The new balance is the current balance, minus any balance used in this order, plus any new balance earned.
+                const newBalance = currentBalance - balanceUsed + balanceEarned;
+
+                // 4. Update the user's balance
+                transaction.set(userBalanceRef, {
+                    userId,
+                    restaurantId,
+                    balance: newBalance,
+                    restaurantName: restaurantDoc.data().name, // Store for easy display
+                    lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                // 5. (Optional) Update the order with the balance that was earned
+                transaction.update(snap.ref, { balanceEarned });
+            });
+
+            console.log(`Successfully updated balance for user ${userId} at restaurant ${restaurantId}.`);
+            return null;
+        } catch (error) {
+            console.error(`Error in updateUserBalanceOnOrder transaction for order ${context.params.orderId}:`, error);
+            // The transaction will automatically be rolled back on error.
+            return null;
+        }
+    });
+
+/**
  * Sends a password reset email to a given user's email address.
  * Must be called by a businessOwner.
  */
 exports.sendPasswordResetEmail = functions.https.onCall(async (data, context) => {
-    // 1. Authentication & Role Check
-    if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
-    }
-    const userDoc = await db.collection("users").doc(context.auth.uid).get();
-    const userData = userDoc.data();
-
-    // Ensure the caller is a businessOwner
-    if (userData.role !== "businessOwner") {
-        throw new functions.https.HttpsError("permission-denied", "Only business owners can reset passwords for their staff.");
-    }
-    
-    // 2. Input Validation
-    const { email } = data;
-    if (!email) {
-        throw new functions.https.HttpsError("invalid-argument", "Request is missing the required 'email' parameter.");
-    }
-
-    try {
-        // 3. Generate password reset link using Firebase Admin SDK
-        const link = await admin.auth().generatePasswordResetLink(email);
-        
-        // 4. (Optional but recommended) Send the email using a transactional email service
-        // For simplicity, we'll rely on Firebase's built-in email sending for now, 
-        // which can be customized in the Firebase Console under Authentication -> Templates.
-        // The generatePasswordResetLink function itself does not send an email.
-        // The standard Firebase flow is to use this link to build your own email.
-        // However, a simpler way is to use the `sendPasswordResetEmail` function from the client SDK,
-        // but for security (ensuring only owners can trigger this for their waiters),
-        // we'll use a custom function. The easiest way to send the actual email is to
-        // just confirm the user exists and then let the client call the standard reset function.
-        // This cloud function's primary role is SECURITY CHECK.
-
-        const userToReset = await admin.auth().getUserByEmail(email);
-        const userToResetDoc = await db.collection("users").doc(userToReset.uid).get();
-        const userToResetData = userToResetDoc.data();
-        
-        // SECURITY CHECK: Ensure the owner is resetting a password for a waiter in THEIR restaurant.
-        if (userToResetData.role !== 'waiter' || userToResetData.restaurantId !== userData.restaurantId) {
-             throw new functions.https.HttpsError("permission-denied", "You can only reset passwords for waiters in your restaurant.");
-        }
-
-        // If all checks pass, we return success. The client will then trigger the actual email.
-        // This is a security-first approach.
-        return { success: true, message: "Authorization granted. Client can proceed with password reset." };
-
-
-    } catch (error) {
-        console.error("Error in sendPasswordResetEmail function:", error);
-        // Provide a more user-friendly error message
-        if (error.code === 'auth/user-not-found') {
-             throw new functions.https.HttpsError("not-found", "The specified user email was not found.");
-        }
-        throw new functions.https.HttpsError("internal", "Failed to process password reset.", error.message);
-    }
+    // ... existing code ...
 });
-
 
 /**
  * Sets a custom role for a user.
  * Must be called by an admin.
  */
 exports.setUserRole = functions.https.onCall(async (data, context) => {
-    // 1. Authentication & Admin Check - CORRECTED LOGIC
-    if (!context.auth || context.auth.token.role !== 'admin') {
-         throw new functions.https.HttpsError("permission-denied", "Only admins can set user roles.");
-    }
-    
-    const { userId, newRole } = data;
-    
-    // 2. Input Validation
-    const validRoles = ['admin', 'businessOwner', 'waiter', 'customer'];
-    if (!userId || !newRole || !validRoles.includes(newRole)) {
-        throw new functions.https.HttpsError("invalid-argument", "Request is missing required 'userId' or 'newRole' parameters.");
-    }
-
-    try {
-        // 3. Set Custom Claim in Auth
-        await admin.auth().setCustomUserClaims(userId, { role: newRole });
-        
-        // 4. Update Role in Firestore
-        await db.collection("users").doc(userId).update({ role: newRole });
-        
-        return { success: true, message: `User ${userId} role updated to ${newRole}.` };
-
-    } catch (error) {
-        console.error("Error setting user role:", error);
-        throw new functions.https.HttpsError("internal", "Failed to update user role.", error.message);
-    }
+    // ... existing code ...
 });
 
 /**
@@ -106,62 +87,7 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
  * This function must be called by an authenticated admin user.
  */
 exports.createRestaurantAndOwner = functions.https.onCall(async (data, context) => {
-    // 1. Authentication & Role Check - CORRECTED LOGIC
-    if (!context.auth || context.auth.token.role !== 'admin') {
-        throw new functions.https.HttpsError("permission-denied", "Only admins can execute this action.");
-    }
-
-    // 2. Input Validation
-    const { 
-        restaurantName, address, cuisine, latitude, longitude,
-        ownerName, ownerEmail, ownerPassword 
-    } = data;
-
-    if (!restaurantName || !address || !ownerName || !ownerEmail || !ownerPassword || !latitude || !longitude) {
-        throw new functions.https.HttpsError("invalid-argument", "Missing required fields for restaurant and owner creation.");
-    }
-
-    let ownerRecord;
-    try {
-        // 3. Create Business Owner User in Firebase Auth
-        ownerRecord = await admin.auth().createUser({
-            email: ownerEmail,
-            password: ownerPassword,
-            displayName: ownerName,
-        });
-
-        // 4. Set Custom Claim for the new owner
-        await admin.auth().setCustomUserClaims(ownerRecord.uid, { role: "businessOwner" });
-
-        // 5. Create Restaurant Document in Firestore
-        const restaurantRef = await db.collection("restaurants").add({
-            name: restaurantName,
-            address: address,
-            cuisine: cuisine,
-            location: new admin.firestore.GeoPoint(parseFloat(latitude), parseFloat(longitude)),
-            ownerId: ownerRecord.uid,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-
-        // 6. Create User Document for the owner in Firestore
-        await db.collection("users").doc(ownerRecord.uid).set({
-            name: ownerName,
-            email: ownerEmail,
-            role: "businessOwner",
-            restaurantId: restaurantRef.id,
-            restaurantName: restaurantName,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        
-        return { success: true, restaurantId: restaurantRef.id, ownerId: ownerRecord.uid };
-
-    } catch (error) {
-        console.error("Error creating restaurant and owner:", error);
-        if (ownerRecord) {
-            await admin.auth().deleteUser(ownerRecord.uid);
-        }
-        throw new functions.https.HttpsError("internal", "An error occurred during creation.", error.message);
-    }
+    // ... existing code ...
 });
 
 /**
@@ -169,48 +95,5 @@ exports.createRestaurantAndOwner = functions.https.onCall(async (data, context) 
  * This function must be called by an authenticated business owner.
  */
 exports.createWaiter = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "The function must be called while authenticated.");
-  }
-
-  const userDoc = await db.collection("users").doc(context.auth.uid).get();
-  const userData = userDoc.data();
-  
-  if (userData.role !== "businessOwner" || !userData.restaurantId) {
-    throw new functions.https.HttpsError("permission-denied", "Only business owners can create waiters.");
-  }
-
-  const { email, password, displayName } = data;
-  const restaurantId = userData.restaurantId;
-
-  if (!email || !password || !displayName) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing required fields: email, password, displayName.");
-  }
-
-  try {
-    const userRecord = await admin.auth().createUser({
-      email: email,
-      password: password,
-      displayName: displayName,
-    });
-
-    await db.collection("users").doc(userRecord.uid).set({
-      name: displayName,
-      email: email,
-      role: "waiter",
-      restaurantId: restaurantId,
-      ownerId: context.auth.uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    await admin.auth().setCustomUserClaims(userRecord.uid, { role: "waiter" });
-
-    return { success: true, message: `Waiter ${displayName} created successfully!`, uid: userRecord.uid };
-  } catch (error) {
-    console.error("Error creating waiter:", error);
-    if (error.code && error.uid) {
-        await admin.auth().deleteUser(error.uid);
-    }
-    throw new functions.https.HttpsError("internal", "An error occurred while creating the waiter.", error.message);
-  }
+  // ... existing code ...
 });
