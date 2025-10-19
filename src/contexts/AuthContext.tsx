@@ -12,6 +12,7 @@ interface UserProfile {
 }
 
 interface AuthContextType {
+  currentUser: User | null;
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean; 
@@ -72,6 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const value: AuthContextType = {
+    currentUser: user,
     user,
     userProfile,
     loading: authLoading || profileLoading,

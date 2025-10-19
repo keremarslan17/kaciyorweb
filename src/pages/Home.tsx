@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import { collection, getDocs, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { Container, Typography, Box, Paper, Button, Grid, Card, CardContent, CardActions, CircularProgress, Link, Alert, Chip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 // --- Interfaces ---
 interface Restaurant {
@@ -59,6 +60,7 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -123,6 +125,14 @@ const HomePage: React.FC = () => {
   
   const featuredRestaurants = restaurants.slice(0, 2);
 
+  const handleRestaurantClick = (restaurantId: string) => {
+    if (currentUser) {
+      navigate(`/restaurant/${restaurantId}`);
+    } else {
+      navigate('/login');
+    }
+  };
+
   const renderMap = () => {
     if (!isLoaded) {
       return <Box display="flex" justifyContent="center" p={5}><CircularProgress /></Box>;
@@ -134,7 +144,7 @@ const HomePage: React.FC = () => {
             key={r.id} 
             position={{ lat: r.location.latitude, lng: r.location.longitude }}
             title={r.name}
-            onClick={() => navigate(`/restaurant/${r.id}`)}
+            onClick={() => handleRestaurantClick(r.id)}
           />
         ))}
         {userPosition && (
@@ -181,7 +191,7 @@ const HomePage: React.FC = () => {
                     )}
                   </CardContent>
                   <CardActions>
-                    <Button size="small" onClick={() => navigate(`/restaurant/${r.id}`)}>Menüyü Gör</Button>
+                    <Button size="small" onClick={() => handleRestaurantClick(r.id)}>Menüyü Gör</Button>
                   </CardActions>
                 </Card>
               </Grid>
