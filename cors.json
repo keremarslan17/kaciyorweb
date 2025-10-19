@@ -1,0 +1,9 @@
+
+[
+  {
+    "origin": ["https://kaciyorortak.web.app", "https://kaciyorortak.firebaseapp.com"],
+    "method": ["GET", "POST", "PUT", "DELETE"],
+    "responseHeader": ["Content-Type", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]

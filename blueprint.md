@@ -36,15 +36,20 @@ Kullanıcıların anlık olarak yakındaki restoran indirimlerini görmesini, me
 
 ### 4. İşletmeci Kontrol Paneli
 - [x] İşletmeciler için özel giriş ekranı.
-- [x] İşletmeciye özel kontrol paneli arayüzü.
+- [x] İşletmeciye özel kontrol paneli arüyüzü.
 - [x] Güvenli bir şekilde yeni garson ekleme (Cloud Function ile).
 - [x] Mevcut garsonları listeleme.
 - [x] **Şifre Sıfırlama:** İşletme sahibi, garsonları için şifre sıfırlama e-postası gönderebilir.
 - [x] **İndirim Yönetimi:** Seçili ürünlere veya tüm ürünlere yüzde veya tutar olarak indirim uygulama.
 - [x] **Satış Raporları:** Günlük, haftalık ve aylık satışları, adetleri ve ciroları detaylı olarak görme.
 - [x] **Restoran Bilgileri:** Restoran ile ilgili tüm bilgileri düzenleyebilme.
+- [x] **Menü Yönetimi:**
+    - [x] Menüye ürün ekleme, silme ve düzenleme.
+    - [x] Ürünleri kategorilere ayırma (Akordiyon menü).
+    - [x] Kategorileri yönetme (ekleme, silme, düzenleme).
+    - [x] Ürünlere fotoğraf ekleme (Firebase Storage entegrasyonu).
+    - [x] Ürünlere alerjen bilgisi ekleme.
 - [ ] **Sadakat Programı:** İşletmeci, sipariş tutarının yüzde kaçının müşteriye bakiye olarak döneceğini belirleyebilir.
-- [ ] Menü ve indirim yönetimi.
 - [ ] Garson silme.
 
 ### 5. Garson Paneli
