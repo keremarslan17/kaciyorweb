@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, Paper, CircularProgress, Alert, Divider, Chip, TextField, Modal, FormControlLabel, Checkbox } from '@mui/material';
+import { 
+    Drawer, List, ListItem, ListItemText, Button, Typography, Box, IconButton, 
+    Paper, CircularProgress, Alert, Divider, TextField, Modal, Avatar, ListItemAvatar 
+} from '@mui/material';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +12,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { QRCodeCanvas } from 'qrcode.react';
-import { collection, addDoc, onSnapshot, doc, DocumentData, getDoc } from 'firebase/firestore';
+import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -19,65 +22,55 @@ interface CartDrawerProps {
   onClose: () => void;
 }
 
-const style = {
+const modalStyle = {
     position: 'absolute' as 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: 400,
     bgcolor: 'background.paper',
-    border: '2px solid #000',
+    borderRadius: 2,
     boxShadow: 24,
     p: 4,
     textAlign: 'center',
 };
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
-  const { cartState, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cartState, removeFromCart, updateQuantity, createOrder, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tableNumber, setTableNumber] = useState('');
-  const [qrCodeValue, setQrCodeValue] = useState('');
+  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
   const [isQrModalOpen, setQrModalOpen] = useState(false);
-  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
-  const [orderStatus, setOrderStatus] = useState('pending');
-  const [userBalance, setUserBalance] = useState(0);
-  const [useBalance, setUseBalance] = useState(false);
-
+  const [orderStatus, setOrderStatus] = useState('pending_confirmation');
+  
+  // This effect listens to order status changes using the orderId from the QR code value
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (user && cartState.restaurantId) {
-        const balanceRef = doc(db, 'userBalances', `${user.uid}_${cartState.restaurantId}`);
-        const balanceSnap = await getDoc(balanceRef);
-        if (balanceSnap.exists()) {
-          setUserBalance(balanceSnap.data().balance);
-        } else {
-          setUserBalance(0);
-        }
-      }
-    };
-    if (open) {
-      fetchBalance();
+    if (!qrCodeValue) return;
+
+    let orderId = '';
+    try {
+        orderId = JSON.parse(qrCodeValue).orderId;
+    } catch(e) {
+        console.error("Failed to parse QR code JSON:", e);
+        return;
     }
-  }, [user, cartState.restaurantId, open]);
 
-  useEffect(() => {
-    if (!pendingOrderId) return;
-    const unsub = onSnapshot(doc(db, "pendingOrders", pendingOrderId), (doc) => {
+    const unsub = onSnapshot(doc(db, "orders", orderId), (doc) => {
         if (doc.exists()) {
-            const data = doc.data() as DocumentData;
+            const data = doc.data();
             setOrderStatus(data.status);
             if (data.status === 'confirmed') {
-                setTimeout(() => { handleCloseModal(); }, 3000);
+                setTimeout(() => { handleCloseModal(); }, 3000); // Close modal 3s after confirmation
             }
         }
     });
     return () => unsub();
-  }, [pendingOrderId]);
+  }, [qrCodeValue]);
 
-  const handleCheckout = async () => {
+  const handleCreateOrder = async () => {
     if (!user) {
       onClose();
       navigate('/login');
@@ -95,39 +88,17 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
     setLoading(true);
     setError('');
     
-    const originalTotal = cartState.items.reduce((total, item) => total + item.price * item.quantity, 0);
-    const balanceToUse = useBalance ? Math.min(originalTotal, userBalance) : 0;
-    const finalTotal = originalTotal - balanceToUse;
-
     try {
-        const pendingOrderRef = await addDoc(collection(db, "pendingOrders"), {
-            restaurantId: cartState.restaurantId,
-            restaurantName: cartState.restaurantName,
-            items: cartState.items,
-            totalPrice: originalTotal, // The price before balance is applied
-            balanceUsed: balanceToUse, // The amount of balance used
-            finalPrice: finalTotal, // The price after balance is applied
-            tableNumber: tableNumber.trim(),
-            orderTime: new Date().toISOString(),
-            status: 'pending',
-            userId: user.uid,
-        });
-
-        const orderDetailsForQR = {
-            pendingOrderId: pendingOrderRef.id,
-            restaurantName: cartState.restaurantName,
-            items: cartState.items,
-            totalPrice: finalTotal,
-            tableNumber: tableNumber.trim(),
-        };
-        
-        setPendingOrderId(pendingOrderRef.id);
-        setQrCodeValue(JSON.stringify(orderDetailsForQR));
-        setQrModalOpen(true);
-        setOrderStatus('pending');
-
-    } catch (err) {
-      setError('Sipariş oluşturulurken bir hata oluştu.');
+        const generatedQrData = await createOrder(tableNumber.trim());
+        if (generatedQrData) {
+            setQrCodeValue(generatedQrData);
+            setOrderStatus('pending_confirmation'); // Reset status for new order
+            setQrModalOpen(true);
+        } else {
+            setError('Sipariş oluşturulamadı.');
+        }
+    } catch (err: any) {
+      setError(`Sipariş hatası: ${err.message}`);
       console.error(err);
     } finally {
       setLoading(false);
@@ -136,32 +107,80 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
 
   const handleCloseModal = () => {
     setQrModalOpen(false);
-    setQrCodeValue('');
-    setPendingOrderId(null);
-    clearCart();
-    onClose();
-    setUseBalance(false); // Reset balance usage on close
+    setQrCodeValue(null);
+    onClose(); 
   };
   
-  const calculateTotals = () => {
-      const originalTotal = cartState.items.reduce((total, item) => total + item.price * item.quantity, 0);
-      const balanceToUse = useBalance ? Math.min(originalTotal, userBalance) : 0;
-      const finalTotal = originalTotal - balanceToUse;
-      return { originalTotal, balanceToUse, finalTotal };
-  };
-
-  const { finalTotal } = calculateTotals();
+  const total = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const renderModalContent = () => {
-    // ... (same as before)
+    switch (orderStatus) {
+      case 'confirmed':
+        return (
+          <Box>
+            <CheckCircleIcon color="success" sx={{ fontSize: 60, mb: 2 }} />
+            <Typography variant="h5" color="success.main">Sipariş Onaylandı!</Typography>
+            <Typography sx={{ mt: 2 }}>Garsonumuz siparişinizi hazırlıyor. Afiyet olsun!</Typography>
+          </Box>
+        );
+      case 'pending_confirmation':
+      default:
+        return (
+          <Box>
+            <HourglassEmptyIcon color="info" sx={{ fontSize: 60, mb: 2 }} />
+            <Typography variant="h5">Garson Onayı Bekleniyor</Typography>
+            <Typography sx={{ mt: 2 }}>Lütfen QR kodu garsona gösterin.</Typography>
+            {qrCodeValue && <QRCodeCanvas value={qrCodeValue} size={256} style={{ marginTop: '20px' }} />}
+          </Box>
+        );
+    }
   };
 
   return (
     <>
-      <Drawer anchor="right" open={open} onClose={onClose}>
-        {/* ... (same as before) ... */}
+      <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: '100%', sm: 400 } } }}>
+        <Paper elevation={0} sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <Typography variant="h6" component="div">
+            Sepetiniz ({cartState.restaurantName || ''})
+          </Typography>
+          <IconButton onClick={onClose} aria-label="close cart">
+            <CloseIcon />
+          </IconButton>
+        </Paper>
+        <Divider />
+
+        {cartState.items.length === 0 ? (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <ShoppingCartIcon color="disabled" sx={{ fontSize: 60, mb: 2 }} />
+            <Typography>Sepetiniz şu an boş.</Typography>
+          </Box>
+        ) : (
+          <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
+            {cartState.items.map(item => (
+              <ListItem key={item.id}>
+                <ListItemAvatar>
+                  <Avatar variant="rounded" src={item.imageUrl || undefined} />
+                </ListItemAvatar>
+                <ListItemText 
+                  primary={item.name} 
+                  secondary={`₺${item.price.toFixed(2)}`} 
+                />
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                  <IconButton size="small" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
+                  <Typography sx={{ mx: 1 }}>{item.quantity}</Typography>
+                  <IconButton size="small" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                    <AddCircleOutlineIcon />
+                  </IconButton>
+                </Box>
+              </ListItem>
+            ))}
+          </List>
+        )}
+
         {cartState.items.length > 0 && (
-            <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid #eee', flexShrink: 0 }}>
+            <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid #eee', flexShrink: 0, backgroundColor: 'background.paper' }}>
               <TextField
                 label="Masa Numarası"
                 variant="outlined"
@@ -169,28 +188,41 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
                 sx={{ mb: 2 }}
+                required
               />
-              {userBalance > 0 && (
-                <FormControlLabel
-                  control={<Checkbox checked={useBalance} onChange={(e) => setUseBalance(e.target.checked)} />}
-                  label={`Kullanılabilir Bakiye: ${userBalance.toFixed(2)} TL`}
-                />
-              )}
-              <Typography variant="h6" align="right">Toplam: ₺{finalTotal.toFixed(2)}</Typography>
+              <Typography variant="h6" align="right">Toplam: ₺{total.toFixed(2)}</Typography>
+              {error && <Alert severity="error" sx={{ mt: 1, mb: 1 }}>{error}</Alert>}
               <Button 
                 variant="contained" 
                 fullWidth 
                 sx={{ mt: 2 }} 
-                onClick={handleCheckout}
+                onClick={handleCreateOrder}
                 disabled={loading}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sepeti Onayla ve QR Oluştur'}
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Siparişi Onayla & QR Oluştur'}
               </Button>
-              {/* ... (rest is the same) ... */}
+              <Button 
+                variant="outlined" 
+                fullWidth 
+                color="error"
+                sx={{ mt: 1 }} 
+                onClick={clearCart}
+              >
+                Sepeti Temizle
+              </Button>
             </Box>
         )}
       </Drawer>
-      {/* ... (modal is the same) ... */}
+      
+      <Modal
+        open={isQrModalOpen}
+        onClose={handleCloseModal}
+        aria-labelledby="qr-code-modal-title"
+      >
+        <Box sx={modalStyle}>
+          {renderModalContent()}
+        </Box>
+      </Modal>
     </>
   );
 };

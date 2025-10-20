@@ -2,12 +2,11 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { db } from '../firebase';
-import { doc, setDoc, onSnapshot, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, collection, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { MenuItem } from '../pages/RestaurantMenu'; // Import the rich MenuItem interface
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
+// CartItem is now an extension of MenuItem, with a quantity
+export interface CartItem extends MenuItem {
   quantity: number;
 }
 
@@ -18,13 +17,13 @@ interface CartState {
 }
 
 interface CartContextType {
-  cart: CartItem[]; // EXPOSE THE CART ITEMS DIRECTLY
+  cart: CartItem[];
   cartState: CartState;
-  addToCart: (item: Omit<CartItem, 'quantity'>, restaurantInfo: { id: string; name: string }) => void;
+  addToCart: (item: MenuItem, restaurantInfo: { id: string; name: string }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
-  checkout: () => Promise<void>;
+  createOrder: (tableNumber: string) => Promise<string | null>; // Returns QR Code data or null
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -39,7 +38,7 @@ export const useCart = () => {
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cartState, setCartState] = useState<CartState>({ restaurantId: null, restaurantName: null, items: [] });
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth(); // Assuming userProfile contains loyalty balances
 
   useEffect(() => {
     if (!user) {
@@ -74,9 +73,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updateCartInFirestore(newState);
   };
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>, restaurantInfo: { id: string; name: string }) => {
+  const addToCart = (item: MenuItem, restaurantInfo: { id: string; name: string }) => {
     if (cartState.restaurantId && cartState.restaurantId !== restaurantInfo.id) {
-      if (window.confirm(`Farklı bir restorandan ürün ekleyemezsiniz. Mevcut sepet (${cartState.restaurantName}) silinsin mi?`)) {
+      if (window.confirm(`Sepetinizde başka bir restorana ait ürünler bulunmaktadır (${cartState.restaurantName}). Sepetinizi temizleyip bu ürünü eklemek ister misiniz?`)) {
         const newState = { restaurantId: restaurantInfo.id, restaurantName: restaurantInfo.name, items: [{ ...item, quantity: 1 }] };
         setCartState(newState);
         updateCartInFirestore(newState);
@@ -119,24 +118,46 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updateCartInFirestore(newState);
   };
 
-  const checkout = async () => {
-    if (!user || cartState.items.length === 0) throw new Error("User not logged in or cart is empty");
-    const total = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const orderData = {
-      userId: user.uid,
-      restaurantId: cartState.restaurantId,
-      restaurantName: cartState.restaurantName,
-      items: cartState.items,
-      total,
-      createdAt: serverTimestamp(),
-      status: 'pending', 
-    };
-    await addDoc(collection(db, 'orders'), orderData);
-    clearCart();
+  const createOrder = async (tableNumber: string): Promise<string | null> => {
+    if (!user || cartState.items.length === 0 || !cartState.restaurantId) {
+        alert("Sipariş oluşturmak için sepetinizde ürün olmalı ve giriş yapmalısınız.");
+        return null;
+    }
+
+    try {
+        const total = cartState.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        
+        const orderData = {
+            userId: user.uid,
+            userName: userProfile?.name || user.email,
+            restaurantId: cartState.restaurantId,
+            restaurantName: cartState.restaurantName,
+            items: cartState.items,
+            total,
+            tableNumber,
+            createdAt: serverTimestamp(),
+            status: 'pending_confirmation', // Garsonun onayını bekliyor
+        };
+        
+        const orderRef = await addDoc(collection(db, 'orders'), orderData);
+        
+        // QR Kod için sipariş ID'sini döndür
+        const qrData = JSON.stringify({ orderId: orderRef.id, restaurantId: cartState.restaurantId });
+        
+        // Sipariş oluşturulduktan sonra sepeti temizle
+        await clearCart();
+
+        return qrData;
+
+    } catch (error) {
+        console.error("Error creating order:", error);
+        alert("Sipariş oluşturulurken bir hata oluştu.");
+        return null;
+    }
   };
 
   return (
-    <CartContext.Provider value={{ cart: cartState.items, cartState, addToCart, removeFromCart, updateQuantity, clearCart, checkout }}>
+    <CartContext.Provider value={{ cart: cartState.items, cartState, addToCart, removeFromCart, updateQuantity, clearCart, createOrder }}>
       {children}
     </CartContext.Provider>
   );
