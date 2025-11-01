@@ -36,9 +36,12 @@ const Navbar: React.FC<{ onCartOpen: () => void }> = ({ onCartOpen }) => {
             }}
         >
             <Toolbar>
-                <Typography variant="h6" component={RouterLink} to="/" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
-                    Kaçıyor
-                </Typography>
+                <Box component={RouterLink} to="/" sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
+                    <img src="/logo2.png" alt="Kaçıyor Logo" style={{ height: '40px', marginRight: '12px' }} />
+                    <Typography variant="h6">
+                        Kaçıyor
+                    </Typography>
+                </Box>
                 {user ? (
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         {!isStaff && (
